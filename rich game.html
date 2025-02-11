@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>เกมตอบคำถามสามก๊ก (Three Kingdom Quiz)</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(to right, #2c3e50, #4ca1af);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+    }
+    .quiz-container {
+      background: #333;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      max-width: 600px;
+      width: 100%;
+    }
+    .btn {
+      padding: 10px 20px;
+      font-size: 18px;
+      color: white;
+      background-color: #f39c12;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px 0;
+      transition: all 0.3s ease;
+    }
+    .btn:hover {
+      background-color: #e67e22;
+      transform: translateY(-2px);
+    }
+    .option-btn {
+      display: block;
+      width: 100%;
+      margin: 5px 0;
+    }
+    .hint-btn {
+      background-color: #3498db;
+      margin: 10px;
+    }
+    .hint-btn:hover {
+      background-color: #2980b9;
+    }
+    .info {
+      font-size: 18px;
+      margin-top: 10px;
+    }
+    input[type="text"] {
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      width: 80%;
+    }
+    /* เพิ่มสไตล์สำหรับ Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.7);
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    .modal-content {
+      background: linear-gradient(135deg, #2c3e50, #3498db);
+      margin: 15% auto;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+      width: 70%;
+      max-width: 500px;
+      position: relative;
+      animation: slideIn 0.3s ease-in-out;
+    }
+    .close-btn {
+      position: absolute;
+      right: 15px;
+      top: 10px;
+      font-size: 24px;
+      font-weight: bold;
+      color: white;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+    .close-btn:hover {
+      color: #f39c12;
+    }
+    .hint-title {
+      color: #f39c12;
+      margin-bottom: 15px;
+      font-size: 24px;
+    }
+    .hint-text {
+      font-size: 18px;
+      line-height: 1.6;
+      color: white;
+      margin: 20px 0;
+    }
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes slideIn {
+      from {
+        transform: translateY(-100px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="quiz-container">
+    <h1>เกมตอบคำถามสามก๊ก</h1>
+    <p>นางสาวศรีสุภา เทศขำ</p>
+    <p>กลุ่มสาระการเรียนรู้ภาษาต่างประเทศ โรงเรียนเรืองวิทย์พิทยาคม</p>
+    <div id="quiz-content">
+      <h2>กรุณากรอกชื่อผู้เล่น</h2>
+      <input type="text" id="playerName" placeholder="ชื่อผู้เล่น" />
+      <br>
+      <button id="start-btn" class="btn">เริ่มเกม</button>
+    </div>
+    <div class="info">
+      <p id="timer"></p>
+      <p id="score">เงินรางวัลสะสม: 0</p>
+    </div>
+  </div>
+
+  <!-- Modal สำหรับแสดงคำใบ้ -->
+  <div id="hintModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn">&times;</span>
+      <h3 class="hint-title">คำใบ้</h3>
+      <p id="hintText" class="hint-text"></p>
+    </div>
+  </div>
+
+  <script>
+    // คำถามทั้งหมด 12 ข้อ พร้อมตัวเลือก คำตอบ รางวัล และคำใบ้
+    const questions = [
+      {
+        question: "ใครเป็นกุนซือของกองทัพจ๊กก๊ก?",
+        options: ["สุมาอี้", "จูกัดเหลียง", "ลกซุน", "โจโฉ"],
+        answer: "จูกัดเหลียง",
+        reward: 500,
+        hint: "นักปราชญ์ผู้มีชื่อเสียงแห่งยุคสามก๊ก ผู้มีความเชี่ยวชาญในการวางแผนการรบและกลยุทธ์ต่างๆ",
+      },
+      {
+        question: "ยุทธการผาแดงเกิดขึ้นในปีใด?",
+        options: ["ค.ศ. 190", "ค.ศ. 200", "ค.ศ. 208", "ค.ศ. 220"],
+        answer: "ค.ศ. 208",
+        reward: 1000,
+        hint: "เป็นศึกครั้งสำคัญที่เกิดขึ้นในต้นศตวรรษที่ 3 ซึ่งเป็นการต่อสู้ระหว่างกองทัพของโจโฉกับพันธมิตรซุนกวนและเล่าปี่",
+      },
+      {
+        question: "ใครเป็นพี่ชายของกวนอู?",
+        options: ["เล่าปี่", "โจโฉ", "ซุนกวน", "ลิโป้"],
+        answer: "เล่าปี่",
+        reward: 1500,
+        hint: "เป็นผู้นำที่มีความสำคัญในอาณาจักรจ๊ก และเป็นหนึ่งในสามพี่น้องร่วมสาบาน",
+      },
+      {
+        question: "โจโฉมีชื่อจริงว่าอะไร?",
+        options: ["โจซอง", "โจหยิน", "โจโฉ", "โจแฮ"],
+        answer: "โจโฉ",
+        reward: 3000,
+        hint: "เป็นชื่อที่รู้จักกันดีที่สุดของผู้นำที่มีอำนาจมากที่สุดในช่วงปลายราชวงศ์ฮั่นตะวันออก",
+      },
+      {
+        question: "ใครเป็นผู้บัญชาการรบของซุนกวนในศึกเซ็กเพ็ก?",
+        options: ["กวนอู", "ลกซุน", "จูกัดเหลียง", "เตียวหุย"],
+        answer: "ลกซุน",
+        reward: 6000,
+        hint: "แม่ทัพผู้มีความสามารถของอาณาจักรอู ผู้มีชื่อเสียงในด้านการวางแผนการรบทางน้ำ",
+      },
+      {
+        question: "สามก๊กมีกี่อาณาจักรหลัก?",
+        options: ["1", "2", "3", "4"],
+        answer: "3",
+        reward: 12000,
+        hint: "จำนวนอาณาจักรที่แบ่งแยกจากราชวงศ์ฮั่น ประกอบด้วย วุย ง่อก๊ก และจ๊กก๊ก",
+      },
+      {
+        question: "สุมาอี้เป็นคู่ปรับสำคัญของใคร?",
+        options: ["กวนอู", "โจโฉ", "จูกัดเหลียง", "ซุนกวน"],
+        answer: "จูกัดเหลียง",
+        reward: 24000,
+        hint: "เป็นคู่ปรับทางยุทธศาสตร์ที่มีการปะทะทางการทหารหลายครั้ง โดยเฉพาะในช่วงการรุกทางเหนือของจ๊กก๊ก",
+      },
+      {
+        question: "กวนอูเสียชีวิตในเมืองใด?",
+        options: ["ฮูโต๋", "อ้วนเซีย", "ฟ่านเฉิง", "เซียงหยาง"],
+        answer: "ฟ่านเฉิง",
+        reward: 48000,
+        hint: "เมืองสำคัญที่เป็นจุดจบของวีรบุรุษผู้กล้า หลังจากถูกโจมตีโดยกองกำลังร่วมของอาณาจักรอูและวุย",
+      },
+      {
+        question: "ใครเป็นผู้สังหารลิโป้?",
+        options: ["โจโฉ", "เล่าปี่", "ซุนกวน", "เตียวหุย"],
+        answer: "โจโฉ",
+        reward: 96000,
+        hint: "ผู้นำที่มีบทบาทสำคัญในการกำจัดคู่แข่งทางการเมือง และเป็นผู้มีอำนาจในราชสำนักฮั่น",
+      },
+      {
+        question: "ขงเบ้งใช้แผนอะไรในการหลอกโจโฉที่ผาแดง?",
+        options: ["แผนยืมลูกธนู", "แผนเรือไฟ", "แผนตีเมือง", "แผนล้อมเมือง"],
+        answer: "แผนเรือไฟ",
+        reward: 100000,
+        hint: "กลยุทธ์ที่ใช้ความได้เปรียบทางภูมิประเทศและสภาพอากาศ เป็นการโจมตีที่ทำให้กองทัพเรือของโจโฉพ่ายแพ้อย่างยับเยิน",
+      },
+      {
+        question: "หลังยุคสามก๊ก ราชวงศ์ใดขึ้นปกครองจีน?",
+        options: ["ฮั่น", "สุย", "จิ้น", "ถัง"],
+        answer: "จิ้น",
+        reward: 200000,
+        hint: "ราชวงศ์ที่รวบรวมจีนเป็นหนึ่งเดียวอีกครั้งหลังจากยุคสามก๊ก นำโดยตระกูลสุมา",
+      },
+      {
+        question: "ศึกใหญ่สุดท้ายของสามก๊กคือศึกใด?",
+        options: ["ศึกเซ็กเพ็ก", "ศึกอิเหลง", "ศึกเตียงปัน", "ศึกลำกุ๋น"],
+        answer: "ศึกอิเหลง",
+        reward: 500000,
+        hint: "ศึกครั้งสุดท้ายที่ปิดฉากยุคสามก๊ก เป็นการต่อสู้ระหว่างก๊กจิ้นและง่อก๊ก",
+      },
+    ];
+
+    let currentQuestionIndex = 0;
+    let totalScore = 0;
+    let timer;
+    let timeLeft = 30;
+    let playerName = "";
+
+    const startButton = document.getElementById("start-btn");
+    const quizContent = document.getElementById("quiz-content");
+    const timerDisplay = document.getElementById("timer");
+    const scoreDisplay = document.getElementById("score");
+    const modal = document.getElementById("hintModal");
+    const closeBtn = document.querySelector(".close-btn");
+    const hintText = document.getElementById("hintText");
+
+    startButton.addEventListener("click", startGame);
+    
+    
+    function startGame() {
+      // รับชื่อผู้เล่นจากช่อง input ถ้าไม่กรอก จะใช้ "ผู้เล่น" เป็นค่าเริ่มต้น
+      playerName = document.getElementById("playerName").value.trim();
+      if (playerName === "") {
+        playerName = "ผู้เล่น";
+      }
+
+      // รีเซ็ตสถานะเริ่มต้น
+      currentQuestionIndex = 0;
+      totalScore = 0;
+      scoreDisplay.innerText = `เงินรางวัลสะสม: ${totalScore}`;
+      alert("ยินดีต้อนรับ " + playerName + "! เริ่มเกมเลย!");
+
+      // แสดงคำถามแรก
+      showQuestion();
+    }
+
+    // ฟังก์ชันแสดงคำถาม
+    function showQuestion() {
+      const question = questions[currentQuestionIndex];
+      quizContent.innerHTML = `
+        <h3>ข้อที่ ${currentQuestionIndex + 1}/${questions.length}</h3>
+        <h2>${question.question}</h2>
+        <p>รางวัลสำหรับข้อนี้: ${question.reward} บาท</p>
+        ${question.options
+          .map(
+            (option) =>
+              `<button class="btn option-btn" onclick="checkAnswer('${option}')">${option}</button>`
+          )
+          .join("")}
+        <button class="btn hint-btn" onclick="useHint()">ขอคำใบ้</button>
+      `;
+      resetTimer();
+    }
+
+    // ฟังก์ชันตรวจคำตอบ
+    function checkAnswer(selectedOption) {
+      const question = questions[currentQuestionIndex];
+      if (selectedOption === question.answer) {
+        totalScore += question.reward;
+        scoreDisplay.innerText = `เงินรางวัลสะสม: ${totalScore}`;
+
+        clearInterval(timer);
+        currentQuestionIndex++;
+
+        if (currentQuestionIndex < questions.length) {
+          showQuestion();
+        } else {
+          showResult();
+        }
+      } else {
+        endGame();
+      }
+    }
+
+// ฟังก์ชันเปิดป๊อบอัพคำใบ้
+function showHintPopup(hint) {
+  hintText.innerText = hint; // ตั้งค่าข้อความคำใบ้
+  modal.style.display = "block"; // แสดง Modal
+}
+
+// ฟังก์ชันปิดป๊อบอัพ
+function closeHintPopup() {
+  modal.style.display = "none"; // ซ่อน Modal
+}
+
+// ฟังก์ชันขอคำใบ้
+function useHint() {
+  const question = questions[currentQuestionIndex];
+  showHintPopup(question.hint); // แสดงคำใบ้ในป๊อบอัพ
+}
+
+// ปิด Modal เมื่อคลิกปุ่มปิด
+closeBtn.addEventListener("click", closeHintPopup);
+
+// ปิด Modal เมื่อคลิกนอกพื้นที่ Modal
+window.addEventListener("click", (event) => {
+  if (event.target === modal) {
+    closeHintPopup();
+  }
+});
+
+    // ฟังก์ชันรีเซ็ตจับเวลา
+    function resetTimer() {
+      clearInterval(timer);
+      timeLeft = 30;
+      timerDisplay.innerText = `เวลาที่เหลือ: ${timeLeft} วินาที`;
+
+      timer = setInterval(() => {
+        timeLeft--;
+        timerDisplay.innerText = `เวลาที่เหลือ: ${timeLeft} วินาที`;
+        if (timeLeft === 0) {
+          clearInterval(timer);
+          endGame();
+        }
+      }, 1000);
+    }
+
+    // ฟังก์ชันจบเกม เมื่อผู้เล่นตอบผิด หรือหมดเวลา
+    function endGame() {
+      clearInterval(timer);
+      quizContent.innerHTML = `
+        <h2>จบเกม! ${playerName}, คุณตอบผิด</h2>
+        <p>คุณตอบถูก ${currentQuestionIndex} ข้อจาก ${questions.length} ข้อ</p>
+        <p>เงินรางวัลสะสมทั้งหมด: ${totalScore} บาท</p>
+        <button class="btn" onclick="startGame()">เล่นอีกครั้ง</button>
+      `;
+    }
+
+    // ฟังก์ชันแสดงผลเมื่อเล่นจบด้วยการตอบถูกครบ
+    function showResult() {
+      quizContent.innerHTML = `
+        <h2>สรุปผลการเล่น</h2>
+        <p>${playerName}, คุณตอบถูกทั้งหมด ${questions.length} ข้อ!</p>
+        <p>เงินรางวัลสะสมทั้งหมด: ${totalScore} บาท</p>
+        <button class="btn" onclick="startGame()">เล่นอีกครั้ง</button>
+      `;
+    }
+  </script>
+  
+</body>
+</html>
+
+    
+    
+    
