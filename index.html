@@ -127,6 +127,7 @@
       }
     }
   </style>
+  
 </head>
 <body>
   <div class="quiz-container">
@@ -259,14 +260,27 @@
 
     startButton.addEventListener("click", startGame);
     
+    function showStartScreen() {
+      quizContent.innerHTML = `
+        <h2>กรุณากรอกชื่อผู้เล่น</h2>
+        <input type="text" id="playerName" placeholder="ชื่อผู้เล่น" />
+        <br>
+        <button class="btn" onclick="startGame()">เริ่มเกม</button>
+      `;
+      
+      // รีเซ็ตคะแนนและ timer display ด้วย
+      scoreDisplay.innerText = `เงินรางวัลสะสม: 0`;
+      timerDisplay.innerText = "";  
+    }
     
-    function startGame() {
-      // รับชื่อผู้เล่นจากช่อง input ถ้าไม่กรอก จะใช้ "ผู้เล่น" เป็นค่าเริ่มต้น
-      playerName = document.getElementById("playerName").value.trim();
-      if (playerName === "") {
-        playerName = "ผู้เล่น";
-      }
-
+	function startGame() {
+  	const nameInput = document.getElementById("playerName");
+  if (nameInput) {
+    playerName = nameInput.value.trim();
+    if (playerName === "") {
+      playerName = "ผู้เล่น";
+    }
+  }
       // รีเซ็ตสถานะเริ่มต้น
       currentQuestionIndex = 0;
       totalScore = 0;
@@ -369,6 +383,7 @@ window.addEventListener("click", (event) => {
       `;
     }
 
+
     // ฟังก์ชันแสดงผลเมื่อเล่นจบด้วยการตอบถูกครบ
     function showResult() {
       quizContent.innerHTML = `
@@ -382,7 +397,4 @@ window.addEventListener("click", (event) => {
   
 </body>
 </html>
-
-    
-    
-    
+ 
