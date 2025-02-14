@@ -16,6 +16,7 @@
       align-items: center;
       height: 100vh;
       text-align: center;
+      flex-direction: column;
     }
     .quiz-container {
       background: #333;
@@ -40,18 +41,6 @@
       background-color: #e67e22;
       transform: translateY(-2px);
     }
-    .option-btn {
-      display: block;
-      width: 100%;
-      margin: 5px 0;
-    }
-    .hint-btn {
-      background-color: #3498db;
-      margin: 10px;
-    }
-    .hint-btn:hover {
-      background-color: #2980b9;
-    }
     .info {
       font-size: 18px;
       margin-top: 10px;
@@ -64,84 +53,22 @@
       margin-bottom: 10px;
       width: 80%;
     }
-    /* เพิ่มสไตล์สำหรับ Modal */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.7);
-      animation: fadeIn 0.3s ease-in-out;
-    }
-    .modal-content {
-      background: linear-gradient(135deg, #2c3e50, #3498db);
-      margin: 15% auto;
-      padding: 20px;
-      border-radius: 15px;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-      width: 70%;
-      max-width: 500px;
-      position: relative;
-      animation: slideIn 0.3s ease-in-out;
-    }
-    .close-btn {
-      position: absolute;
-      right: 15px;
-      top: 10px;
-      font-size: 24px;
+    .next-btn {
+      display: block;
+      margin: 20px auto 0; /* ทำให้ปุ่มอยู่ตรงกลางด้านล่าง */
+      background-color: #ff5722;
+      color: white;
+      padding: 12px 24px;
+      text-decoration: none;
+      font-size: 20px;
       font-weight: bold;
-      color: white;
-      cursor: pointer;
-      transition: color 0.3s ease;
+      border-radius: 8px;
+      transition: background-color 0.3s, transform 0.2s;
     }
-    .close-btn:hover {
-      color: #f39c12;
+    .next-btn:hover {
+      background-color: #e64a19;
+      transform: scale(1.05);
     }
-    .hint-title {
-      color: #f39c12;
-      margin-bottom: 15px;
-      font-size: 24px;
-    }
-    .hint-text {
-      font-size: 18px;
-      line-height: 1.6;
-      color: white;
-      margin: 20px 0;
-    }
-    /* Animations */
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-    @keyframes slideIn {
-      from {
-        transform: translateY(-100px);
-        opacity: 0;
-      }
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
-
-	.center-container {
-  display: flex;
-  justify-content: center; /* จัดตรงกลางแนวนอน */
-  align-items: center; /* จัดตรงกลางแนวตั้ง */
-  height: 100vh; /* ให้เต็มจอ */
-}
-
-	.next-btn {
-  background-color: #ff5722;
-  color: white;
-  padding: 12px 20px;
-  text-decoration: none;
-  font-size: 18px;
-  border-radius: 6px;
-}
-
   </style>
   
 </head>
@@ -162,19 +89,8 @@
     </div>
   </div>
 
-  <!-- Modal สำหรับแสดงคำใบ้ -->
-  <div id="hintModal" class="modal">
-    <div class="modal-content">
-      <span class="close-btn">&times;</span>
-      <h3 class="hint-title">คำใบ้</h3>
-      <p id="hintText" class="hint-text"></p>
-    </div>
-  </div>
-
-<div class="center-container">
+  <!-- ปุ่มไปหน้าถัดไป -->
   <a href="page%202.html" class="next-btn">ไปหน้าถัดไป</a>
-</div>
-	
 </style>
 	
   <script>
