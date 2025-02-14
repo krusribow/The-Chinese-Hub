@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ระบบสุ่มคำศัพท์สำหรับการอ่าน</title>
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #ff9a9e, #fad0c4);
+      --button-gradient: linear-gradient(135deg, #6a11cb, #2575fc);
+      --disabled-gradient: linear-gradient(135deg, #ccc, #999);
+      --accent-color: #6a11cb;
+    }
+    body {
+      font-family: 'Kanit', 'Arial', sans-serif;
+      background: var(--primary-gradient);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      text-align: center;
+      max-width: 600px;
+      width: 100%;
+      position: relative;
+    }
+    h1, h2, h3 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: bold;
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .buttons-container {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .buttons-container label {
+      font-size: 16px;
+      color: #333;
+    }
+    input[type="number"],
+    select {
+      padding: 5px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      text-align: center;
+    }
+    input[type="checkbox"] {
+      margin-right: 5px;
+    }
+    button {
+      background: var(--button-gradient);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 16px;
+      font-family: 'Kanit', sans-serif;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+    button:disabled {
+      background: var(--disabled-gradient);
+      cursor: not-allowed;
+    }
+    .result {
+      font-size: 20px;
+      font-weight: bold;
+      color: #333;
+      margin: 20px 0;
+      padding: 20px;
+      border: 2px dashed var(--accent-color);
+      border-radius: 10px;
+      background: rgba(106,17,203,0.1);
+      animation: pulse 2s infinite;
+      word-break: break-word;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+    .loading {
+      font-size: 20px;
+      color: #555;
+      margin: 15px 0;
+    }
+    #timerDisplay {
+      font-size: 16px;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    /* แบบทดสอบหลังการอ่าน (สำหรับความหมาย) */
+    #testContainer {
+      display: none;
+      margin-top: 20px;
+      border: 2px solid var(--accent-color);
+      padding: 15px;
+      border-radius: 10px;
+      background: rgba(106,17,203,0.05);
+    }
+    #testOptions button {
+      margin: 5px;
+      padding: 8px 16px;
+      font-size: 16px;
+    }
+    #startTestBtn {
+      margin-top: 10px;
+    }
+    /* ส่วนประเมินการอ่าน (สำหรับให้คุณครูบอกว่ารับคำไหนถูกหรือผิด) */
+    #evaluateBtn {
+      display: none;
+      margin-top: 10px;
+    }
+    #evaluationContainer {
+      display: none;
+      margin-top: 20px;
+      border: 2px solid var(--accent-color);
+      padding: 15px;
+      border-radius: 10px;
+      background: rgba(106,17,203,0.05);
+      text-align: left;
+    }
+    #evaluationList div {
+      margin-bottom: 10px;
+    }
+    #evaluationList span {
+      font-weight: bold;
+    }
+    #evaluationList button {
+      margin-left: 10px;
+      padding: 5px 10px;
+      font-size: 14px;
+    }
+    /* ประวัติและสถิติ */
+    .history, .stats {
+      margin-top: 20px;
+      text-align: left;
+      background: rgba(255,255,255,0.8);
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      max-height: 250px;
+      overflow-y: auto;
+    }
+    .history ul, .stats ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+    }
+    .history li, .stats li {
+      background: rgba(106,17,203,0.1);
+      padding: 12px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .history li .timestamp, .stats li .timestamp {
+      font-size: 0.8em;
+      color: #666;
+    }
+    /* Modal styles */
+    #instructionModal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    /* Popup Notification (Toast) Styles with Bounce Effect */
+    #toastContainer {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2000;
+    }
+    .toast {
+      background: rgba(0,0,0,0.8);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      margin-top: 10px;
+      animation: popupBounce 0.5s forwards, fadeOut 0.5s 2.5s forwards;
+    }
+    @keyframes popupBounce {
+      0% { transform: scale(0); opacity: 0; }
+      50% { transform: scale(1.2); opacity: 1; }
+      70% { transform: scale(0.9); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    @keyframes fadeOut {
+      0% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    /* Confetti Styles */
+    .confetti {
+      width: 10px;
+      height: 10px;
+      background-color: #f0f;
+      position: absolute;
+      animation: confetti 3s ease-out forwards;
+    }
+    @keyframes confetti {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>ระบบสุ่มคำศัพท์สำหรับการอ่าน</h1>
+    
+    <div class="buttons-container">
+      <!-- เลือกจำนวนคำที่สุ่ม -->
+      <label for="wordCountInput">จำนวนคำที่สุ่ม (2-10):</label>
+      <input type="number" id="wordCountInput" min="2" max="10" value="5" />
+      <!-- ตั้งเวลาการอ่าน -->
+      <label for="timerSelect">ตั้งเวลาการอ่าน:</label>
+      <select id="timerSelect">
+        <option value="none">ไม่จับเวลา</option>
+        <option value="1">1 นาที</option>
+        <option value="3">3 นาที</option>
+        <option value="5">5 นาที</option>
+      </select>
+      <!-- โหมดความยาก -->
+      <label for="difficultyMode">
+        <input type="checkbox" id="difficultyMode" /> โหมดความยาก
+      </label>
+      <button id="drawButton">🎲 สุ่มคำศัพท์</button>
+      <button id="resetButton">🔄 เริ่มใหม่</button>
+      <button id="exportButton">📊 ส่งออกข้อมูล</button>
+      <button id="instructionButton">ℹ️ คำแนะนำ</button>
+    </div>
+    
+    <!-- แสดงผลคำศัพท์ที่สุ่มได้ -->
+    <div id="resultDisplay" class="result" style="display: none;"></div>
+    
+    <!-- ปุ่มสำหรับเริ่มประเมินการอ่าน (ให้คุณครูบอกว่าคำไหนถูกหรือผิด) -->
+    <button id="evaluateBtn" style="display: none;">ประเมินการอ่าน</button>
+    
+    <!-- แสดงสถานะการสุ่ม / เวลาที่เหลือ -->
+    <div id="loading" class="loading"></div>
+    <div id="timerDisplay"></div>
+    
+    <!-- ส่วนแบบทดสอบหลังการอ่าน (สำหรับคำถามความหมาย) -->
+    <div id="testContainer">
+      <h3>แบบทดสอบหลังการอ่าน</h3>
+      <div id="testQuestion"></div>
+      <div id="testOptions"></div>
+      <button id="startTestBtn" style="display:none;">เริ่มแบบทดสอบ</button>
+    </div>
+    
+    <!-- ส่วนประเมินการอ่าน (สำหรับให้คุณครูบอกว่านักเรียนอ่านถูก/ผิด) -->
+    <div id="evaluationContainer">
+      <h3>ประเมินการอ่าน</h3>
+      <div id="evaluationList"></div>
+      <button id="submitEvaluationBtn">บันทึกการประเมิน</button>
+    </div>
+    
+    <!-- ประวัติการสุ่ม -->
+    <div class="history">
+      <h3>ประวัติการสุ่ม</h3>
+      <ul id="historyList"></ul>
+    </div>
+    
+    <!-- สถิติ -->
+    <div class="stats">
+      <h3>สถิติ</h3>
+      <ul id="statsList"></ul>
+    </div>
+  </div>
+  
+  <!-- Modal คำแนะนำ -->
+  <div id="instructionModal">
+    <div style="background: white; padding: 20px; border-radius: 10px; max-width: 400px; width: 90%;">
+      <h2>คำแนะนำ</h2>
+      <p>
+        1. เลือกจำนวนคำที่จะสุ่ม (2-10) และตั้งเวลาการอ่าน (หรือไม่จับเวลา)<br>
+        2. เมื่อสุ่มคำศัพท์แล้ว ระบบจะแสดงรายการคำศัพท์ที่สุ่มได้<br>
+        3. คุณครูสามารถกดปุ่ม "ประเมินการอ่าน" เพื่อบันทึกการอ่านของนักเรียน โดยเลือกว่าคำไหนถูกหรือผิด<br>
+        4. นอกจากนี้ยังมีแบบทดสอบหลังการอ่านสำหรับตรวจสอบความเข้าใจของนักเรียน
+      </p>
+      <button id="closeModal" style="background: var(--button-gradient); color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-top: 10px;">
+        ปิด
+      </button>
+    </div>
+  </div>
+  
+  <!-- Popup Notification Container -->
+  <div id="toastContainer"></div>
+  
+  <script>
+    class ReadingSystem {
+      constructor() {
+        // รายการคำศัพท์ (ปรับแก้หรือเพิ่มได้ตามต้องการ)
+        this.wordList = [
+          "你好", "谢谢", "再见", "请", "对不起", "我", "你", "他", "她", "我们",
+          "他们", "中国", "美国", "学习", "工作", "家庭", "朋友", "学校", "老师", "学生",
+          "早上", "晚上", "天气", "美丽", "快乐"
+        ];
+        // ข้อมูลความหมายสำหรับแบบทดสอบ (ปรับหรือเพิ่มได้)
+        this.wordMeanings = {
+          "你好": "Hello",
+          "谢谢": "Thank you",
+          "再见": "Goodbye",
+          "请": "Please",
+          "对不起": "Sorry",
+          "我": "I / Me",
+          "你": "You",
+          "他": "He",
+          "她": "She",
+          "我们": "We"
+          // เพิ่มความหมายเพิ่มเติมตามต้องการ
+        };
+        // สถิติรวม
+        this.totalRounds = 0;
+        this.totalTestQuestions = 0;
+        this.totalCorrectAnswers = 0;
+        // สำหรับการประเมินการอ่าน
+        this.totalEvaluatedRounds = 0;
+        this.totalReadingCorrect = 0;
+        this.totalReadingIncorrect = 0;
+        this.history = [];
+        // สำหรับเก็บคำศัพท์ในรอบปัจจุบัน
+        this.currentSelectedWords = [];
+        // สำหรับการประเมินของรอบปัจจุบัน (เก็บค่า true/false ตามลำดับ index)
+        this.currentEvaluation = {};
+        
+        this.initializeElements();
+        this.initializeEventListeners();
+        this.loadFromLocalStorage();
+        this.updateUI();
+      }
+      
+      initializeElements() {
+        this.drawButton = document.getElementById("drawButton");
+        this.resetButton = document.getElementById("resetButton");
+        this.exportButton = document.getElementById("exportButton");
+        this.instructionButton = document.getElementById("instructionButton");
+        this.resultDisplay = document.getElementById("resultDisplay");
+        this.loading = document.getElementById("loading");
+        this.timerDisplay = document.getElementById("timerDisplay");
+        this.historyList = document.getElementById("historyList");
+        this.statsList = document.getElementById("statsList");
+        this.instructionModal = document.getElementById("instructionModal");
+        this.closeModal = document.getElementById("closeModal");
+        this.toastContainer = document.getElementById("toastContainer");
+        this.wordCountInput = document.getElementById("wordCountInput");
+        this.timerSelect = document.getElementById("timerSelect");
+        this.difficultyModeChk = document.getElementById("difficultyMode");
+        this.testContainer = document.getElementById("testContainer");
+        this.testQuestion = document.getElementById("testQuestion");
+        this.testOptions = document.getElementById("testOptions");
+        this.startTestBtn = document.getElementById("startTestBtn");
+        this.evaluateBtn = document.getElementById("evaluateBtn");
+        this.evaluationContainer = document.getElementById("evaluationContainer");
+        this.evaluationList = document.getElementById("evaluationList");
+        this.submitEvaluationBtn = document.getElementById("submitEvaluationBtn");
+      }
+      
+      initializeEventListeners() {
+        this.drawButton.addEventListener("click", () => this.draw());
+        this.resetButton.addEventListener("click", () => this.reset());
+        this.exportButton.addEventListener("click", () => this.exportData());
+        this.instructionButton.addEventListener("click", () => this.showInstructions());
+        this.closeModal.addEventListener("click", () => this.hideInstructions());
+        this.evaluateBtn.addEventListener("click", () => this.showEvaluationUI());
+        this.submitEvaluationBtn.addEventListener("click", () => this.submitEvaluation());
+      }
+      
+      loadFromLocalStorage() {
+        const savedHistory = localStorage.getItem("readingHistory");
+        const savedStats = localStorage.getItem("readingStats");
+        if (savedHistory) {
+          this.history = JSON.parse(savedHistory);
+        }
+        if (savedStats) {
+          const stats = JSON.parse(savedStats);
+          this.totalRounds = stats.totalRounds;
+          this.totalTestQuestions = stats.totalTestQuestions;
+          this.totalCorrectAnswers = stats.totalCorrectAnswers;
+          this.totalEvaluatedRounds = stats.totalEvaluatedRounds || 0;
+          this.totalReadingCorrect = stats.totalReadingCorrect || 0;
+          this.totalReadingIncorrect = stats.totalReadingIncorrect || 0;
+        }
+      }
+      
+      saveToLocalStorage() {
+        localStorage.setItem("readingHistory", JSON.stringify(this.history));
+        localStorage.setItem("readingStats", JSON.stringify({
+          totalRounds: this.totalRounds,
+          totalTestQuestions: this.totalTestQuestions,
+          totalCorrectAnswers: this.totalCorrectAnswers,
+          totalEvaluatedRounds: this.totalEvaluatedRounds,
+          totalReadingCorrect: this.totalReadingCorrect,
+          totalReadingIncorrect: this.totalReadingIncorrect
+        }));
+      }
+      
+      updateUI() {
+        this.updateHistory();
+        this.updateStats();
+      }
+      
+      updateHistory() {
+        this.historyList.innerHTML = this.history
+          .map((item, index) => `
+            <li>
+              <span>รอบที่ ${index + 1}: ${item.words.join(", ")}</span>
+              <span class="timestamp">${new Date(item.timestamp).toLocaleString()}</span>
+            </li>
+          `)
+          .join("");
+      }
+      
+      updateStats() {
+        const testAccuracy = this.totalTestQuestions > 0 ? Math.round((this.totalCorrectAnswers / this.totalTestQuestions) * 100) : 0;
+        const readingAccuracy = (this.totalReadingCorrect + this.totalReadingIncorrect) > 0 ?
+          Math.round((this.totalReadingCorrect / (this.totalReadingCorrect + this.totalReadingIncorrect)) * 100) : 0;
+        this.statsList.innerHTML = `
+          <li>รอบการอ่าน: ${this.totalRounds}</li>
+          <li>คำถามแบบทดสอบ: ${this.totalTestQuestions} คำ, ตอบถูก: ${this.totalCorrectAnswers} คำ, ความถูกต้อง: ${testAccuracy}%</li>
+          <li>การประเมินการอ่าน: ${this.totalEvaluatedRounds} รอบ, อ่านถูก: ${this.totalReadingCorrect} คำ, อ่านผิด: ${this.totalReadingIncorrect} คำ, ความถูกต้อง: ${readingAccuracy}%</li>
+        `;
+      }
+      
+      // แสดงแจ้งเตือนแบบ Popup (Toast)
+      showToast(message) {
+        const toast = document.createElement("div");
+        toast.className = "toast";
+        toast.textContent = message;
+        this.toastContainer.appendChild(toast);
+        setTimeout(() => { toast.remove(); }, 3000);
+      }
+      
+      // สร้างเอฟเฟกต์ Confetti
+      createConfetti() {
+        const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff'];
+        for (let i = 0; i < 50; i++) {
+          const confetti = document.createElement('div');
+          confetti.className = 'confetti';
+          confetti.style.left = Math.random() * window.innerWidth + 'px';
+          confetti.style.top = "-10px";
+          confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+          document.body.appendChild(confetti);
+          setTimeout(() => { confetti.remove(); }, 3000);
+        }
+      }
+      
+      async draw() {
+        // ซ่อนส่วนทดสอบและการประเมินถ้าแสดงอยู่
+        this.testContainer.style.display = "none";
+        this.evaluateBtn.style.display = "none";
+        this.evaluationContainer.style.display = "none";
+        this.testQuestion.innerHTML = "";
+        this.testOptions.innerHTML = "";
+        
+        if (this.wordList.length === 0) {
+          this.resultDisplay.textContent = "⚠️ ไม่มีคำศัพท์ที่ให้ไว้ ⚠️";
+          this.resultDisplay.style.display = "block";
+          return;
+        }
+        
+        let count = parseInt(this.wordCountInput.value, 10);
+        if (isNaN(count) || count < 2 || count > 10) {
+          this.showToast("กรุณาเลือกจำนวนคำระหว่าง 2 ถึง 10");
+          return;
+        }
+        
+        this.loading.textContent = "กำลังสุ่มคำศัพท์...";
+        this.resultDisplay.style.display = "none";
+        this.timerDisplay.textContent = "";
+        
+        // เอฟเฟกต์การสุ่มเล็กน้อย
+        for (let i = 0; i < 5; i++) {
+          await new Promise(resolve => setTimeout(resolve, 200));
+          this.loading.textContent = "กำลังสุ่มคำศัพท์" + ".".repeat(i + 1);
+        }
+        
+        const shuffled = [...this.wordList].sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, count);
+        this.currentSelectedWords = selected;
+        this.resultDisplay.innerHTML = `<strong>คำศัพท์ที่สุ่มได้ (${count} คำ):</strong><br>${selected.join(", ")}`;
+        this.resultDisplay.style.display = "block";
+        this.loading.textContent = "";
+        this.totalRounds++;
+        this.history.push({
+          words: selected,
+          timestamp: new Date().toISOString()
+        });
+        this.saveToLocalStorage();
+        this.updateUI();
+        
+        this.createConfetti();
+        this.showToast("สุ่มคำศัพท์เรียบร้อย!");
+        
+        // ตรวจสอบการตั้งเวลา
+        const timerVal = this.timerSelect.value;
+        if (timerVal !== "none") {
+          let minutes = parseInt(timerVal, 10);
+          if (this.difficultyModeChk.checked) { minutes = minutes / 2; }
+          let totalSeconds = minutes * 60;
+          this.startCountdown(totalSeconds);
+        } else {
+          // ถ้าไม่จับเวลา แสดงปุ่มเริ่มแบบทดสอบและประเมินการอ่าน
+          this.startTestBtn.style.display = "inline-block";
+          this.evaluateBtn.style.display = "inline-block";
+        }
+      }
+      
+      startCountdown(seconds) {
+        this.timerDisplay.textContent = `เหลือเวลา: ${seconds} วินาที`;
+        const interval = setInterval(() => {
+          seconds--;
+          this.timerDisplay.textContent = `เหลือเวลา: ${seconds} วินาที`;
+          if (seconds <= 0) {
+            clearInterval(interval);
+            this.timerDisplay.textContent = "หมดเวลาแล้ว!";
+            // เรียกให้แสดงปุ่มประเมินการอ่าน
+            this.evaluateBtn.style.display = "inline-block";
+          }
+        }, 1000);
+      }
+      
+      // ===================== ส่วนแบบทดสอบหลังการอ่าน (สำหรับความหมาย) =====================
+      // (ฟังก์ชันสำหรับแบบทดสอบความหมายยังคงอยู่เหมือนเดิม ถ้าต้องการใช้งาน)
+      startTestSession() {
+        // โค้ดแบบทดสอบสามารถปรับปรุงต่อได้ตามต้องการ
+        // (ในที่นี้ไม่ได้ใช้งานร่วมกับการประเมินการอ่านด้วยตนเอง)
+      }
+      
+      // ===================== ส่วนประเมินการอ่าน (ให้คุณครูบอกว่าถูกหรือผิด) =====================
+      showEvaluationUI() {
+        // แสดง UI สำหรับการประเมิน โดยสร้างรายการคำศัพท์พร้อมปุ่ม "ถูก" และ "ผิด"
+        if (this.currentSelectedWords.length === 0) {
+          this.showToast("ยังไม่มีคำศัพท์ให้ประเมิน กรุณาสุ่มคำศัพท์ก่อน");
+          return;
+        }
+        this.currentEvaluation = {}; // รีเซ็ตการประเมิน
+        this.evaluationList.innerHTML = "";
+        this.currentSelectedWords.forEach((word, index) => {
+          const div = document.createElement("div");
+          div.innerHTML = `<span>${word}</span>`;
+          const correctBtn = document.createElement("button");
+          correctBtn.textContent = "ถูก";
+          correctBtn.addEventListener("click", () => {
+            this.currentEvaluation[index] = true;
+            correctBtn.style.backgroundColor = "#28a745";
+            incorrectBtn.style.backgroundColor = "";
+          });
+          const incorrectBtn = document.createElement("button");
+          incorrectBtn.textContent = "ผิด";
+          incorrectBtn.addEventListener("click", () => {
+            this.currentEvaluation[index] = false;
+            incorrectBtn.style.backgroundColor = "#dc3545";
+            correctBtn.style.backgroundColor = "";
+          });
+          div.appendChild(correctBtn);
+          div.appendChild(incorrectBtn);
+          this.evaluationList.appendChild(div);
+        });
+        this.evaluationContainer.style.display = "block";
+      }
+      
+      submitEvaluation() {
+        // ตรวจสอบว่าทุกคำถูกประเมินหรือยัง
+        if (Object.keys(this.currentEvaluation).length !== this.currentSelectedWords.length) {
+          this.showToast("กรุณาประเมินทุกคำก่อนบันทึก");
+          return;
+        }
+        let correctCount = 0;
+        let incorrectCount = 0;
+        Object.values(this.currentEvaluation).forEach(val => {
+          if (val) { correctCount++; } else { incorrectCount++; }
+        });
+        this.totalEvaluatedRounds++;
+        this.totalReadingCorrect += correctCount;
+        this.totalReadingIncorrect += incorrectCount;
+        this.saveToLocalStorage();
+        this.updateUI();
+        this.showToast(`ประเมินการอ่าน: ถูก ${correctCount} คำ, ผิด ${incorrectCount} คำ`);
+        this.evaluationContainer.style.display = "none";
+      }
+      
+      reset() {
+        if (confirm("คุณต้องการเริ่มใหม่ทั้งหมดหรือไม่? ข้อมูลจะถูกลบทั้งหมด")) {
+          this.history = [];
+          this.totalRounds = 0;
+          this.totalTestQuestions = 0;
+          this.totalCorrectAnswers = 0;
+          this.totalEvaluatedRounds = 0;
+          this.totalReadingCorrect = 0;
+          this.totalReadingIncorrect = 0;
+          this.saveToLocalStorage();
+          this.updateUI();
+          this.showToast("ระบบรีเซ็ตแล้ว!");
+          this.testContainer.style.display = "none";
+          this.timerDisplay.textContent = "";
+          this.resultDisplay.style.display = "none";
+          this.evaluateBtn.style.display = "none";
+          this.evaluationContainer.style.display = "none";
+        }
+      }
+      
+      exportData() {
+        const data = {
+          history: this.history,
+          wordList: this.wordList,
+          stats: {
+            totalRounds: this.totalRounds,
+            totalTestQuestions: this.totalTestQuestions,
+            totalCorrectAnswers: this.totalCorrectAnswers,
+            totalEvaluatedRounds: this.totalEvaluatedRounds,
+            totalReadingCorrect: this.totalReadingCorrect,
+            totalReadingIncorrect: this.totalReadingIncorrect
+          }
+        };
+        const dataStr = JSON.stringify(data, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "reading_data.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        this.showToast("ส่งออกข้อมูลแล้ว!");
+      }
+      
+      showInstructions() {
+        this.instructionModal.style.display = "flex";
+      }
+      
+      hideInstructions() {
+        this.instructionModal.style.display = "none";
+      }
+    }
+    
+    document.addEventListener("DOMContentLoaded", () => {
+      new ReadingSystem();
+    });
+  </script>
+</body>
+</html>
