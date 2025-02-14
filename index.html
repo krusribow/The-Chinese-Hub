@@ -133,15 +133,17 @@
   height: 100vh; /* ให้เต็มจอ */
 }
 .next-btn {
-  background-color: #ff5722;
+  position: fixed; /* ติดไว้ที่ตำแหน่งเดิมแม้เลื่อนหน้าจอ */
+  bottom: 20px; /* ระยะห่างจากขอบล่าง */
+  left: 50%;
+  transform: translateX(-50%); /* จัดให้อยู่กึ่งกลาง */
+  background-color: #ff5722; /* สีพื้นหลัง */
   color: white;
   padding: 12px 20px;
   text-decoration: none;
   font-size: 18px;
   border-radius: 6px;
 }
-  }
-
   .next-btn:hover {
     background-color: #e64a19;
   }
@@ -175,8 +177,8 @@
     </div>
   </div>
 
-	<div class="center-container">
-  <a href="page2.html" class="next-btn">ไปหน้าถัดไป</a>
+<div class="center-container">
+<a href="page%202.html" class="next-btn">ไปหน้าถัดไป</a>
 </div>
 	
 </style>
