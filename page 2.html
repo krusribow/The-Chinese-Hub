@@ -127,6 +127,30 @@
       p, button, .result { font-size: 16px; }
       .counts, .reset-container { font-size: 16px; }
     }
+
+  .next-container {
+  display: flex;
+  justify-content: center; /* จัดให้อยู่ตรงกลางแนวนอน */
+  align-items: center;
+  margin-top: 20px;
+}
+
+.next-btn {
+  background-color: #ff5722; /* สีส้มสด */
+  color: white;
+  padding: 12px 24px;
+  text-decoration: none;
+  font-size: 18px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.next-btn:hover {
+  background-color: #e64a19; /* สีส้มเข้มเมื่อ hover */
+  transform: translateY(-2px);
+}
+    
   </style>
 </head>
 <body>
@@ -169,6 +193,10 @@
   
   <!-- เอฟเฟกต์เสียง (ตัวอย่างใช้เสียงระฆัง) -->
   <audio id="successSound" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" preload="auto"></audio>
+  
+<div class="next-container">
+  <a href="page3.html" class="next-btn">ไปหน้าถัดไป</a>
+</div>
   
   <script>
     // กำหนดตัวเลือกพร้อมจำนวนครั้งเริ่มต้น
@@ -435,3 +463,4 @@
   </script>
 </body>
 </html>
+
