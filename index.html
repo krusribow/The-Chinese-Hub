@@ -1,9 +1,5 @@
 <!DOCTYPE html>
 <html lang="th">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-<a href="page2.html" class="next-btn">
-  ไปหน้าถัดไป <i class="fas fa-arrow-right"></i>
-</a>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -130,16 +126,20 @@
         opacity: 1;
       }
 
-  .next-btn {
-    background-color: #ff5722; /* สีส้ม */
-    color: white;
-    padding: 12px 20px;
-    font-size: 18px;
-    border-radius: 6px;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
+.center-container {
+  display: flex;
+  justify-content: center; /* จัดตรงกลางแนวนอน */
+  align-items: center; /* จัดตรงกลางแนวตั้ง */
+  height: 100vh; /* ให้เต็มจอ */
+}
+.next-btn {
+  background-color: #ff5722;
+  color: white;
+  padding: 12px 20px;
+  text-decoration: none;
+  font-size: 18px;
+  border-radius: 6px;
+}
   }
 
   .next-btn:hover {
@@ -175,6 +175,10 @@
     </div>
   </div>
 
+	<div class="center-container">
+  <a href="page2.html" class="next-btn">ไปหน้าถัดไป</a>
+</div>
+	
 </style>
 	
   <script>
