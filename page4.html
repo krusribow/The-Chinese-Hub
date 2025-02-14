@@ -1,705 +1,670 @@
 <!DOCTYPE html>
 <html lang="th">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ระบบสุ่มคำศัพท์สำหรับการอ่าน</title>
-  <style>
-    :root {
-      --primary-gradient: linear-gradient(135deg, #ff9a9e, #fad0c4);
-      --button-gradient: linear-gradient(135deg, #6a11cb, #2575fc);
-      --disabled-gradient: linear-gradient(135deg, #ccc, #999);
-      --accent-color: #6a11cb;
-    }
-    body {
-      font-family: 'Kanit', 'Arial', sans-serif;
-      background: var(--primary-gradient);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      margin: 0;
-      padding: 20px;
-    }
-    .container {
-      background: white;
-      padding: 25px;
-      border-radius: 15px;
-      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-      text-align: center;
-      max-width: 600px;
-      width: 100%;
-      position: relative;
-    }
-    h1, h2, h3 {
-      color: #333;
-      margin-bottom: 20px;
-    }
-    h1 {
-      font-size: 28px;
-      font-weight: bold;
-      background: var(--primary-gradient);
-      -webkit-background-clip: text;
-      background-clip: text;
-      color: transparent;
-    }
-    .buttons-container {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .buttons-container label {
-      font-size: 16px;
-      color: #333;
-    }
-    input[type="number"],
-    select {
-      padding: 5px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      text-align: center;
-    }
-    input[type="checkbox"] {
-      margin-right: 5px;
-    }
-    button {
-      background: var(--button-gradient);
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      border-radius: 25px;
-      cursor: pointer;
-      font-size: 16px;
-      font-family: 'Kanit', sans-serif;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      transition: all 0.3s ease;
-    }
-    button:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-    }
-    button:disabled {
-      background: var(--disabled-gradient);
-      cursor: not-allowed;
-    }
-    .result {
-      font-size: 20px;
-      font-weight: bold;
-      color: #333;
-      margin: 20px 0;
-      padding: 20px;
-      border: 2px dashed var(--accent-color);
-      border-radius: 10px;
-      background: rgba(106,17,203,0.1);
-      animation: pulse 2s infinite;
-      word-break: break-word;
-    }
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.02); }
-      100% { transform: scale(1); }
-    }
-    .loading {
-      font-size: 20px;
-      color: #555;
-      margin: 15px 0;
-    }
-    #timerDisplay {
-      font-size: 25px;
-      margin-top: 10px;
-      font-weight: bold;
-    }
-    /* แบบทดสอบหลังการอ่าน (สำหรับความหมาย) */
-    #testContainer {
-      display: none;
-      margin-top: 20px;
-      border: 2px solid var(--accent-color);
-      padding: 15px;
-      border-radius: 10px;
-      background: rgba(106,17,203,0.05);
-    }
-    #testOptions button {
-      margin: 5px;
-      padding: 8px 16px;
-      font-size: 16px;
-    }
-    #startTestBtn {
-      margin-top: 10px;
-    }
-    /* ส่วนประเมินการอ่าน (สำหรับให้คุณครูบอกว่ารับคำไหนถูกหรือผิด) */
-    #evaluateBtn {
-      display: none;
-      margin-top: 10px;
-    }
-    #evaluationContainer {
-      display: none;
-      margin-top: 20px;
-      border: 2px solid var(--accent-color);
-      padding: 15px;
-      border-radius: 10px;
-      background: rgba(106,17,203,0.05);
-      text-align: left;
-    }
-    #evaluationList div {
-      margin-bottom: 10px;
-    }
-    #evaluationList span {
-      font-weight: bold;
-    }
-    #evaluationList button {
-      margin-left: 10px;
-      padding: 5px 10px;
-      font-size: 14px;
-    }
-    /* ประวัติและสถิติ */
-    .history, .stats {
-      margin-top: 20px;
-      text-align: left;
-      background: rgba(255,255,255,0.8);
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      max-height: 250px;
-      overflow-y: auto;
-    }
-    .history ul, .stats ul {
-      list-style-type: none;
-      padding: 0;
-      margin: 0;
-    }
-    .history li, .stats li {
-      background: rgba(106,17,203,0.1);
-      padding: 12px;
-      margin-bottom: 8px;
-      border-radius: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .history li .timestamp, .stats li .timestamp {
-      font-size: 0.8em;
-      color: #666;
-    }
-    /* Modal styles */
-    #instructionModal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.5);
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-    /* Popup Notification (Toast) Styles with Bounce Effect */
-    #toastContainer {
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 2000;
-    }
-    .toast {
-      background: rgba(0,0,0,0.8);
-      color: white;
-      padding: 10px 20px;
-      border-radius: 5px;
-      margin-top: 10px;
-      animation: popupBounce 0.5s forwards, fadeOut 0.5s 2.5s forwards;
-    }
-    @keyframes popupBounce {
-      0% { transform: scale(0); opacity: 0; }
-      50% { transform: scale(1.2); opacity: 1; }
-      70% { transform: scale(0.9); }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    @keyframes fadeOut {
-      0% { opacity: 1; }
-      100% { opacity: 0; }
-    }
-    /* Confetti Styles */
-    .confetti {
-      width: 10px;
-      height: 10px;
-      background-color: #f0f;
-      position: absolute;
-      animation: confetti 3s ease-out forwards;
-    }
-    @keyframes confetti {
-      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-    }
-    .next-container {
-  display: flex;
-  justify-content: center; /* จัดให้อยู่ตรงกลางแนวนอน */
-  align-items: center;
-  margin-top: 20px;
-}
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ระบบฝึกอ่านคำศัพท์ภาษาจีน</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Font: Sarabun -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: 'Sarabun', sans-serif;
+      }
+    </style>
+  </head>
+  <body class="bg-gradient-to-br from-blue-50 to-cyan-100 min-h-screen">
+    <div id="root"></div>
 
-.next-btn {
-  background-color: #ff5722; /* สีส้มสด */
-  color: white;
-  padding: 12px 24px;
-  text-decoration: none;
-  font-size: 18px;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
-}
+    <!-- React & ReactDOM (React 18) -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-.next-btn:hover {
-  background-color: #e64a19; /* สีส้มเข้มเมื่อ hover */
-  transform: translateY(-2px);
-}
-   
-    
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>ระบบสุ่มคำศัพท์สำหรับการอ่าน</h1>
-    
-    <div class="buttons-container">
-      <!-- เลือกจำนวนคำที่สุ่ม -->
-      <label for="wordCountInput">จำนวนคำที่สุ่ม (2-10):</label>
-      <input type="number" id="wordCountInput" min="2" max="10" value="5" />
-      <!-- ตั้งเวลาการอ่าน -->
-      <label for="timerSelect">ตั้งเวลาการอ่าน:</label>
-      <select id="timerSelect">
-        <option value="none">ไม่จับเวลา</option>
-        <option value="1">1 นาที</option>
-        <option value="3">3 นาที</option>
-        <option value="5">5 นาที</option>
-      </select>
-      <!-- โหมดความยาก -->
-      <label for="difficultyMode">
-        <input type="checkbox" id="difficultyMode" /> โหมดความยาก
-      </label>
-      <button id="drawButton">🎲 สุ่มคำศัพท์</button>
-      <button id="resetButton">🔄 เริ่มใหม่</button>
-      <button id="exportButton">📊 ส่งออกข้อมูล</button>
-      <button id="instructionButton">ℹ️ คำแนะนำ</button>
-    </div>
-    
-    <!-- แสดงผลคำศัพท์ที่สุ่มได้ -->
-    <div id="resultDisplay" class="result" style="display: none;"></div>
-    
-    <!-- ปุ่มสำหรับเริ่มประเมินการอ่าน (ให้คุณครูบอกว่าคำไหนถูกหรือผิด) -->
-    <button id="evaluateBtn" style="display: none;">ประเมินการอ่าน</button>
-    
-    <!-- แสดงสถานะการสุ่ม / เวลาที่เหลือ -->
-    <div id="loading" class="loading"></div>
-    <div id="timerDisplay"></div>
-    
-    <!-- ส่วนแบบทดสอบหลังการอ่าน (สำหรับคำถามความหมาย) -->
-    <div id="testContainer">
-      <h3>แบบทดสอบหลังการอ่าน</h3>
-      <div id="testQuestion"></div>
-      <div id="testOptions"></div>
-      <button id="startTestBtn" style="display:none;">เริ่มแบบทดสอบ</button>
-    </div>
-    
-    <!-- ส่วนประเมินการอ่าน (สำหรับให้คุณครูบอกว่านักเรียนอ่านถูก/ผิด) -->
-    <div id="evaluationContainer">
-      <h3>ประเมินการอ่าน</h3>
-      <div id="evaluationList"></div>
-      <button id="submitEvaluationBtn">บันทึกการประเมิน</button>
-    </div>
-    
-    <!-- ประวัติการสุ่ม -->
-    <div class="history">
-      <h3>ประวัติการสุ่ม</h3>
-      <ul id="historyList"></ul>
-    </div>
-    
-    <!-- สถิติ -->
-    <div class="stats">
-      <h3>สถิติ</h3>
-      <ul id="statsList"></ul>
-    </div>
-  </div>
-  
-  <!-- Modal คำแนะนำ -->
-  <div id="instructionModal">
-    <div style="background: white; padding: 20px; border-radius: 10px; max-width: 400px; width: 90%;">
-      <h2>คำแนะนำ</h2>
-      <p>
-        1. เลือกจำนวนคำที่จะสุ่ม (2-10) และตั้งเวลาการอ่าน (หรือไม่จับเวลา)<br>
-        2. เมื่อสุ่มคำศัพท์แล้ว ระบบจะแสดงรายการคำศัพท์ที่สุ่มได้<br>
-        3. คุณครูสามารถกดปุ่ม "ประเมินการอ่าน" เพื่อบันทึกการอ่านของนักเรียน โดยเลือกว่าคำไหนถูกหรือผิด<br>
-        4. นอกจากนี้ยังมีแบบทดสอบหลังการอ่านสำหรับตรวจสอบความเข้าใจของนักเรียน
-      </p>
-      <button id="closeModal" style="background: var(--button-gradient); color: white; padding: 10px 20px; border: none; border-radius: 5px; margin-top: 10px;">
-        ปิด
-      </button>
-    </div>
-  </div>
-  
-  <!-- Popup Notification Container -->
-  <div id="toastContainer"></div>
-  <div class="next-container">
-  <a href="page5.html" class="next-btn">ไปหน้าถัดไป</a>
-</div>
+    <!-- Application Code -->
+    <script type="text/babel" data-presets="env,react">
+      const { useState, useEffect } = React;
 
-  <div class="next-container">
-  <a href="index.html" class="next-btn">Home</a>
-</div>
-  
-  
-  <script>
-    class ReadingSystem {
-      constructor() {
-        // รายการคำศัพท์ (ปรับแก้หรือเพิ่มได้ตามต้องการ)
-        this.wordList = [
-          "你好", "谢谢", "再见", "请", "对不起", "我", "你", "他", "她", "我们",
-          "他们", "中国", "美国", "学习", "工作", "家庭", "朋友", "学校", "老师", "学生",
-          "早上", "晚上", "天气", "美丽", "快乐"
+      // --------------------------------------------------
+      // Icon Components
+      // --------------------------------------------------
+      const TimerIcon = (props) => (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth="2"
+          {...props}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+      );
+
+      const RotateCcwIcon = (props) => (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth="2"
+          {...props}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M4.93 4.93a10 10 0 0114.14 0M4 4v6h6"
+          />
+        </svg>
+      );
+
+      const CheckIcon = (props) => (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth="2"
+          {...props}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M5 13l4 4L19 7"
+          />
+        </svg>
+      );
+
+      const XIcon = (props) => (
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth="2"
+          {...props}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      );
+
+      // --------------------------------------------------
+      // Layout/Card Components
+      // --------------------------------------------------
+      const Card = ({ children, className = "" }) => (
+        <div className={`bg-white shadow rounded mb-6 ${className}`}>{children}</div>
+      );
+
+      const CardHeader = ({ children }) => (
+        <div className="border-b p-4 bg-gradient-to-r from-blue-100 to-cyan-50 rounded-t">
+          {children}
+        </div>
+      );
+
+      const CardTitle = ({ children, className = "" }) => (
+        <h2 className={`text-xl font-bold ${className}`}>{children}</h2>
+      );
+
+      const CardContent = ({ children }) => (
+        <div className="p-4">{children}</div>
+      );
+
+      // --------------------------------------------------
+      // Modal Component (แจ้งเตือนป๊อปอัพ)
+      // --------------------------------------------------
+      const Modal = ({ isOpen, onClose, title, children }) => {
+        if (!isOpen) return null;
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white w-11/12 max-w-md rounded shadow-lg overflow-hidden">
+              <div className="border-b p-4 flex justify-between items-center bg-blue-100">
+                <h3 className="font-bold text-lg">{title}</h3>
+                <button onClick={onClose}>
+                  <XIcon className="w-5 h-5 text-gray-600 hover:text-red-600" />
+                </button>
+              </div>
+              <div className="p-4">{children}</div>
+            </div>
+          </div>
+        );
+      };
+
+      // --------------------------------------------------
+      // Share Buttons Component
+      // --------------------------------------------------
+      /**
+       * - ลองใช้ Web Share API (navigator.share) ถ้ารองรับ
+       * - ถ้าไม่รองรับ ให้แสดงลิงก์ Facebook / Twitter แทน
+       */
+      const ShareButtons = ({ stats }) => {
+        const { correctReadings, incorrectReadings } = stats;
+        const total = correctReadings + incorrectReadings;
+        const accuracy =
+          total > 0
+            ? Math.round((correctReadings / total) * 100)
+            : 0;
+
+        // ข้อความที่จะโพสต์
+        const shareText = `ฉันอ่านถูกต้อง ${correctReadings} คำ จาก ${total} คำ! ความแม่นยำ ${accuracy}% ใน "ระบบฝึกอ่านคำศัพท์ภาษาจีน"`;
+        const shareUrl = "https://example.com/chinese-vocab"; // ใส่ลิงก์จริงของหน้าเว็บ
+
+        const shareStats = async () => {
+          if (navigator.share) {
+            // ถ้า Web Share API ใช้ได้
+            try {
+              await navigator.share({
+                title: "ฝึกอ่านคำศัพท์ภาษาจีน",
+                text: shareText,
+                url: shareUrl,
+              });
+            } catch (error) {
+              console.error("การแชร์ล้มเหลว:", error);
+            }
+          }
+        };
+
+        // ลิงก์สำหรับ FB/Twitter (fallback)
+        const fbShareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+          shareUrl
+        )}&quote=${encodeURIComponent(shareText)}`;
+        const twitterShareLink = `https://twitter.com/intent/tweet?text=${encodeURIComponent(
+          shareText
+        )}&url=${encodeURIComponent(shareUrl)}`;
+
+        const isWebShareSupported = typeof navigator !== "undefined" && !!navigator.share;
+
+        return (
+          <div className="mt-4">
+            <h3 className="text-lg font-semibold mb-2">แชร์สถิติ</h3>
+            {isWebShareSupported ? (
+              <button
+                onClick={shareStats}
+                className="px-4 py-2 bg-pink-600 text-white rounded hover:bg-pink-700 transition-colors"
+              >
+                แชร์ (ผ่าน Web Share API)
+              </button>
+            ) : (
+              <div className="flex gap-2">
+                <a
+                  href={fbShareLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                >
+                  แชร์ผ่าน Facebook
+                </a>
+                <a
+                  href={twitterShareLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 bg-blue-400 text-white rounded hover:bg-blue-500 transition-colors"
+                >
+                  แชร์ผ่าน Twitter
+                </a>
+              </div>
+            )}
+          </div>
+        );
+      };
+
+      // --------------------------------------------------
+      // Main Application Component
+      // --------------------------------------------------
+      const ChineseVocabPractice = () => {
+        const wordList = [
+          "你好", "谢谢", "再见", "请", "对不起",
+          "我", "你", "他", "她", "我们",
+          "他们", "中国", "美国", "学习", "工作",
+          "家庭", "朋友", "学校", "老师", "学生"
         ];
-        // ข้อมูลความหมายสำหรับแบบทดสอบ (ปรับหรือเพิ่มได้)
-        this.wordMeanings = {
-          "你好": "Hello",
-          "谢谢": "Thank you",
-          "再见": "Goodbye",
-          "请": "Please",
-          "对不起": "Sorry",
-          "我": "I / Me",
-          "你": "You",
-          "他": "He",
-          "她": "She",
-          "我们": "We"
-          // เพิ่มความหมายเพิ่มเติมตามต้องการ
+
+        // State definitions
+        const [selectedWords, setSelectedWords] = useState([]);
+        const [wordCount, setWordCount] = useState(5);
+
+        // Timer states
+        const [timer, setTimer] = useState("none");
+        const [timeLeft, setTimeLeft] = useState(0);
+        const [isHardMode, setIsHardMode] = useState(false);
+        const [isTimerStarted, setIsTimerStarted] = useState(false);
+
+        // Reading states
+        const [isReading, setIsReading] = useState(false);
+        const [currentWordIndex, setCurrentWordIndex] = useState(0);
+        const [readingResults, setReadingResults] = useState({});
+
+        // Stats & History
+        const [history, setHistory] = useState([]);
+        const [stats, setStats] = useState({
+          totalRounds: 0,
+          correctReadings: 0,
+          incorrectReadings: 0,
+        });
+
+        // Modal
+        const [isModalOpen, setIsModalOpen] = useState(false);
+        const [modalTitle, setModalTitle] = useState("");
+        const [modalContent, setModalContent] = useState("");
+
+        // ----------------------------
+        // Timer handling
+        // ----------------------------
+        const startTimer = () => {
+          if (timer === "none") return;
+          setIsTimerStarted(true);
+          const minutes = parseInt(timer, 10);
+          // ถ้าโหมดยาก -> 1 นาที = 30 วินาที
+          const seconds = minutes * (isHardMode ? 30 : 60);
+          setTimeLeft(seconds);
         };
-        // สถิติรวม
-        this.totalRounds = 0;
-        this.totalTestQuestions = 0;
-        this.totalCorrectAnswers = 0;
-        // สำหรับการประเมินการอ่าน
-        this.totalEvaluatedRounds = 0;
-        this.totalReadingCorrect = 0;
-        this.totalReadingIncorrect = 0;
-        this.history = [];
-        // สำหรับเก็บคำศัพท์ในรอบปัจจุบัน
-        this.currentSelectedWords = [];
-        // สำหรับการประเมินของรอบปัจจุบัน (เก็บค่า true/false ตามลำดับ index)
-        this.currentEvaluation = {};
-        
-        this.initializeElements();
-        this.initializeEventListeners();
-        this.loadFromLocalStorage();
-        this.updateUI();
-      }
-      
-      initializeElements() {
-        this.drawButton = document.getElementById("drawButton");
-        this.resetButton = document.getElementById("resetButton");
-        this.exportButton = document.getElementById("exportButton");
-        this.instructionButton = document.getElementById("instructionButton");
-        this.resultDisplay = document.getElementById("resultDisplay");
-        this.loading = document.getElementById("loading");
-        this.timerDisplay = document.getElementById("timerDisplay");
-        this.historyList = document.getElementById("historyList");
-        this.statsList = document.getElementById("statsList");
-        this.instructionModal = document.getElementById("instructionModal");
-        this.closeModal = document.getElementById("closeModal");
-        this.toastContainer = document.getElementById("toastContainer");
-        this.wordCountInput = document.getElementById("wordCountInput");
-        this.timerSelect = document.getElementById("timerSelect");
-        this.difficultyModeChk = document.getElementById("difficultyMode");
-        this.testContainer = document.getElementById("testContainer");
-        this.testQuestion = document.getElementById("testQuestion");
-        this.testOptions = document.getElementById("testOptions");
-        this.startTestBtn = document.getElementById("startTestBtn");
-        this.evaluateBtn = document.getElementById("evaluateBtn");
-        this.evaluationContainer = document.getElementById("evaluationContainer");
-        this.evaluationList = document.getElementById("evaluationList");
-        this.submitEvaluationBtn = document.getElementById("submitEvaluationBtn");
-      }
-      
-      initializeEventListeners() {
-        this.drawButton.addEventListener("click", () => this.draw());
-        this.resetButton.addEventListener("click", () => this.reset());
-        this.exportButton.addEventListener("click", () => this.exportData());
-        this.instructionButton.addEventListener("click", () => this.showInstructions());
-        this.closeModal.addEventListener("click", () => this.hideInstructions());
-        this.evaluateBtn.addEventListener("click", () => this.showEvaluationUI());
-        this.submitEvaluationBtn.addEventListener("click", () => this.submitEvaluation());
-      }
-      
-      loadFromLocalStorage() {
-        const savedHistory = localStorage.getItem("readingHistory");
-        const savedStats = localStorage.getItem("readingStats");
-        if (savedHistory) {
-          this.history = JSON.parse(savedHistory);
-        }
-        if (savedStats) {
-          const stats = JSON.parse(savedStats);
-          this.totalRounds = stats.totalRounds;
-          this.totalTestQuestions = stats.totalTestQuestions;
-          this.totalCorrectAnswers = stats.totalCorrectAnswers;
-          this.totalEvaluatedRounds = stats.totalEvaluatedRounds || 0;
-          this.totalReadingCorrect = stats.totalReadingCorrect || 0;
-          this.totalReadingIncorrect = stats.totalReadingIncorrect || 0;
-        }
-      }
-      
-      saveToLocalStorage() {
-        localStorage.setItem("readingHistory", JSON.stringify(this.history));
-        localStorage.setItem("readingStats", JSON.stringify({
-          totalRounds: this.totalRounds,
-          totalTestQuestions: this.totalTestQuestions,
-          totalCorrectAnswers: this.totalCorrectAnswers,
-          totalEvaluatedRounds: this.totalEvaluatedRounds,
-          totalReadingCorrect: this.totalReadingCorrect,
-          totalReadingIncorrect: this.totalReadingIncorrect
-        }));
-      }
-      
-      updateUI() {
-        this.updateHistory();
-        this.updateStats();
-      }
-      
-      updateHistory() {
-        this.historyList.innerHTML = this.history
-          .map((item, index) => `
-            <li>
-              <span>รอบที่ ${index + 1}: ${item.words.join(", ")}</span>
-              <span class="timestamp">${new Date(item.timestamp).toLocaleString()}</span>
-            </li>
-          `)
-          .join("");
-      }
-      
-      updateStats() {
-        const testAccuracy = this.totalTestQuestions > 0 ? Math.round((this.totalCorrectAnswers / this.totalTestQuestions) * 100) : 0;
-        const readingAccuracy = (this.totalReadingCorrect + this.totalReadingIncorrect) > 0 ?
-          Math.round((this.totalReadingCorrect / (this.totalReadingCorrect + this.totalReadingIncorrect)) * 100) : 0;
-        this.statsList.innerHTML = `
-          <li>รอบการอ่าน: ${this.totalRounds}</li>
-          <li>คำถามแบบทดสอบ: ${this.totalTestQuestions} คำ, ตอบถูก: ${this.totalCorrectAnswers} คำ, ความถูกต้อง: ${testAccuracy}%</li>
-          <li>การประเมินการอ่าน: ${this.totalEvaluatedRounds} รอบ, อ่านถูก: ${this.totalReadingCorrect} คำ, อ่านผิด: ${this.totalReadingIncorrect} คำ, ความถูกต้อง: ${readingAccuracy}%</li>
-        `;
-      }
-      
-      // แสดงแจ้งเตือนแบบ Popup (Toast)
-      showToast(message) {
-        const toast = document.createElement("div");
-        toast.className = "toast";
-        toast.textContent = message;
-        this.toastContainer.appendChild(toast);
-        setTimeout(() => { toast.remove(); }, 3000);
-      }
-      
-      // สร้างเอฟเฟกต์ Confetti
-      createConfetti() {
-        const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff'];
-        for (let i = 0; i < 50; i++) {
-          const confetti = document.createElement('div');
-          confetti.className = 'confetti';
-          confetti.style.left = Math.random() * window.innerWidth + 'px';
-          confetti.style.top = "-10px";
-          confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-          document.body.appendChild(confetti);
-          setTimeout(() => { confetti.remove(); }, 3000);
-        }
-      }
-      
-      async draw() {
-        // ซ่อนส่วนทดสอบและการประเมินถ้าแสดงอยู่
-        this.testContainer.style.display = "none";
-        this.evaluateBtn.style.display = "none";
-        this.evaluationContainer.style.display = "none";
-        this.testQuestion.innerHTML = "";
-        this.testOptions.innerHTML = "";
-        
-        if (this.wordList.length === 0) {
-          this.resultDisplay.textContent = "⚠️ ไม่มีคำศัพท์ที่ให้ไว้ ⚠️";
-          this.resultDisplay.style.display = "block";
-          return;
-        }
-        
-        let count = parseInt(this.wordCountInput.value, 10);
-        if (isNaN(count) || count < 2 || count > 10) {
-          this.showToast("กรุณาเลือกจำนวนคำระหว่าง 2 ถึง 10");
-          return;
-        }
-        
-        this.loading.textContent = "กำลังสุ่มคำศัพท์...";
-        this.resultDisplay.style.display = "none";
-        this.timerDisplay.textContent = "";
-        
-        // เอฟเฟกต์การสุ่มเล็กน้อย
-        for (let i = 0; i < 5; i++) {
-          await new Promise(resolve => setTimeout(resolve, 200));
-          this.loading.textContent = "กำลังสุ่มคำศัพท์" + ".".repeat(i + 1);
-        }
-        
-        const shuffled = [...this.wordList].sort(() => 0.5 - Math.random());
-        const selected = shuffled.slice(0, count);
-        this.currentSelectedWords = selected;
-        this.resultDisplay.innerHTML = `<strong>คำศัพท์ที่สุ่มได้ (${count} คำ):</strong><br>${selected.join(", ")}`;
-        this.resultDisplay.style.display = "block";
-        this.loading.textContent = "";
-        this.totalRounds++;
-        this.history.push({
-          words: selected,
-          timestamp: new Date().toISOString()
-        });
-        this.saveToLocalStorage();
-        this.updateUI();
-        
-        this.createConfetti();
-        this.showToast("สุ่มคำศัพท์เรียบร้อย!");
-        
-        // ตรวจสอบการตั้งเวลา
-        const timerVal = this.timerSelect.value;
-        if (timerVal !== "none") {
-          let minutes = parseInt(timerVal, 10);
-          if (this.difficultyModeChk.checked) { minutes = minutes / 2; }
-          let totalSeconds = minutes * 60;
-          this.startCountdown(totalSeconds);
-        } else {
-          // ถ้าไม่จับเวลา แสดงปุ่มเริ่มแบบทดสอบและประเมินการอ่าน
-          this.startTestBtn.style.display = "inline-block";
-          this.evaluateBtn.style.display = "inline-block";
-        }
-      }
-      
-      startCountdown(seconds) {
-        this.timerDisplay.textContent = `เหลือเวลา: ${seconds} วินาที`;
-        const interval = setInterval(() => {
-          seconds--;
-          this.timerDisplay.textContent = `เหลือเวลา: ${seconds} วินาที`;
-          if (seconds <= 0) {
-            clearInterval(interval);
-            this.timerDisplay.textContent = "หมดเวลาแล้ว!";
-            // เรียกให้แสดงปุ่มประเมินการอ่าน
-            this.evaluateBtn.style.display = "inline-block";
-          }
-        }, 1000);
-      }
-      
-      // ===================== ส่วนแบบทดสอบหลังการอ่าน (สำหรับความหมาย) =====================
-      // (ฟังก์ชันสำหรับแบบทดสอบความหมายยังคงอยู่เหมือนเดิม ถ้าต้องการใช้งาน)
-      startTestSession() {
-        // โค้ดแบบทดสอบสามารถปรับปรุงต่อได้ตามต้องการ
-        // (ในที่นี้ไม่ได้ใช้งานร่วมกับการประเมินการอ่านด้วยตนเอง)
-      }
-      
-      // ===================== ส่วนประเมินการอ่าน (ให้คุณครูบอกว่าถูกหรือผิด) =====================
-      showEvaluationUI() {
-        // แสดง UI สำหรับการประเมิน โดยสร้างรายการคำศัพท์พร้อมปุ่ม "ถูก" และ "ผิด"
-        if (this.currentSelectedWords.length === 0) {
-          this.showToast("ยังไม่มีคำศัพท์ให้ประเมิน กรุณาสุ่มคำศัพท์ก่อน");
-          return;
-        }
-        this.currentEvaluation = {}; // รีเซ็ตการประเมิน
-        this.evaluationList.innerHTML = "";
-        this.currentSelectedWords.forEach((word, index) => {
-          const div = document.createElement("div");
-          div.innerHTML = `<span>${word}</span>`;
-          const correctBtn = document.createElement("button");
-          correctBtn.textContent = "ถูก";
-          correctBtn.addEventListener("click", () => {
-            this.currentEvaluation[index] = true;
-            correctBtn.style.backgroundColor = "#28a745";
-            incorrectBtn.style.backgroundColor = "";
+
+        const stopTimer = () => {
+          setIsTimerStarted(false);
+        };
+
+        useEffect(() => {
+          if (!isTimerStarted || timeLeft <= 0) return;
+          const interval = setInterval(() => {
+            setTimeLeft((prev) => {
+              if (prev > 1) return prev - 1;
+              clearInterval(interval);
+              setIsTimerStarted(false);
+              setModalTitle("หมดเวลา!");
+              setModalContent("การจับเวลาสิ้นสุดแล้ว");
+              setIsModalOpen(true);
+              return 0;
+            });
+          }, 1000);
+
+          return () => clearInterval(interval);
+        }, [timeLeft, isTimerStarted]);
+
+        // ----------------------------
+        // Utility functions
+        // ----------------------------
+        const formatTime = (sec) => {
+          const mm = Math.floor(sec / 60);
+          const ss = (sec % 60).toString().padStart(2, "0");
+          return `${mm}:${ss}`;
+        };
+
+        const closeModal = () => {
+          setIsModalOpen(false);
+        };
+
+        // ----------------------------
+        // Core logic
+        // ----------------------------
+        const drawWords = () => {
+          const shuffled = [...wordList].sort(() => Math.random() - 0.5);
+          const selected = shuffled.slice(0, wordCount);
+
+          setSelectedWords(selected);
+          setStats((prev) => ({ ...prev, totalRounds: prev.totalRounds + 1 }));
+          setHistory((prev) => [
+            ...prev,
+            { words: selected, timestamp: new Date().toISOString() },
+          ]);
+
+          // reset
+          setReadingResults({});
+          setCurrentWordIndex(0);
+          setIsReading(false);
+          setIsTimerStarted(false);
+          setTimeLeft(0);
+        };
+
+        const startReading = () => {
+          if (selectedWords.length === 0) return;
+          setIsReading(true);
+          setCurrentWordIndex(0);
+          setReadingResults({});
+        };
+
+        const evaluateReading = (isCorrect) => {
+          setReadingResults((prev) => {
+            const updated = { ...prev, [currentWordIndex]: isCorrect };
+
+            // ถ้าเป็นคำสุดท้าย -> สรุปสถิติ
+            if (currentWordIndex === selectedWords.length - 1) {
+              const correctCount = Object.values(updated).filter((v) => v).length;
+              const incorrectCount = Object.values(updated).filter((v) => !v).length;
+              setStats((prevStats) => ({
+                ...prevStats,
+                correctReadings: prevStats.correctReadings + correctCount,
+                incorrectReadings: prevStats.incorrectReadings + incorrectCount,
+              }));
+              setIsReading(false);
+            }
+
+            return updated;
           });
-          const incorrectBtn = document.createElement("button");
-          incorrectBtn.textContent = "ผิด";
-          incorrectBtn.addEventListener("click", () => {
-            this.currentEvaluation[index] = false;
-            incorrectBtn.style.backgroundColor = "#dc3545";
-            correctBtn.style.backgroundColor = "";
-          });
-          div.appendChild(correctBtn);
-          div.appendChild(incorrectBtn);
-          this.evaluationList.appendChild(div);
-        });
-        this.evaluationContainer.style.display = "block";
-      }
-      
-      submitEvaluation() {
-        // ตรวจสอบว่าทุกคำถูกประเมินหรือยัง
-        if (Object.keys(this.currentEvaluation).length !== this.currentSelectedWords.length) {
-          this.showToast("กรุณาประเมินทุกคำก่อนบันทึก");
-          return;
-        }
-        let correctCount = 0;
-        let incorrectCount = 0;
-        Object.values(this.currentEvaluation).forEach(val => {
-          if (val) { correctCount++; } else { incorrectCount++; }
-        });
-        this.totalEvaluatedRounds++;
-        this.totalReadingCorrect += correctCount;
-        this.totalReadingIncorrect += incorrectCount;
-        this.saveToLocalStorage();
-        this.updateUI();
-        this.showToast(`ประเมินการอ่าน: ถูก ${correctCount} คำ, ผิด ${incorrectCount} คำ`);
-        this.evaluationContainer.style.display = "none";
-      }
-      
-      reset() {
-        if (confirm("คุณต้องการเริ่มใหม่ทั้งหมดหรือไม่? ข้อมูลจะถูกลบทั้งหมด")) {
-          this.history = [];
-          this.totalRounds = 0;
-          this.totalTestQuestions = 0;
-          this.totalCorrectAnswers = 0;
-          this.totalEvaluatedRounds = 0;
-          this.totalReadingCorrect = 0;
-          this.totalReadingIncorrect = 0;
-          this.saveToLocalStorage();
-          this.updateUI();
-          this.showToast("ระบบรีเซ็ตแล้ว!");
-          this.testContainer.style.display = "none";
-          this.timerDisplay.textContent = "";
-          this.resultDisplay.style.display = "none";
-          this.evaluateBtn.style.display = "none";
-          this.evaluationContainer.style.display = "none";
-        }
-      }
-      
-      exportData() {
-        const data = {
-          history: this.history,
-          wordList: this.wordList,
-          stats: {
-            totalRounds: this.totalRounds,
-            totalTestQuestions: this.totalTestQuestions,
-            totalCorrectAnswers: this.totalCorrectAnswers,
-            totalEvaluatedRounds: this.totalEvaluatedRounds,
-            totalReadingCorrect: this.totalReadingCorrect,
-            totalReadingIncorrect: this.totalReadingIncorrect
+
+          // ไปคำถัดไป
+          if (currentWordIndex < selectedWords.length - 1) {
+            setCurrentWordIndex((prev) => prev + 1);
           }
         };
-        const dataStr = JSON.stringify(data, null, 2);
-        const blob = new Blob([dataStr], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "reading_data.json";
-        a.click();
-        URL.revokeObjectURL(url);
-        this.showToast("ส่งออกข้อมูลแล้ว!");
-      }
-      
-      showInstructions() {
-        this.instructionModal.style.display = "flex";
-      }
-      
-      hideInstructions() {
-        this.instructionModal.style.display = "none";
-      }
-    }
-    
-    document.addEventListener("DOMContentLoaded", () => {
-      new ReadingSystem();
-    });
-  </script>
-</body>
+
+        const resetReading = () => {
+          setReadingResults({});
+          setIsReading(false);
+          setCurrentWordIndex(0);
+        };
+
+        const resetSystem = () => {
+          if (!window.confirm("รีเซ็ตข้อมูลทั้งหมด?")) return;
+          setSelectedWords([]);
+          setHistory([]);
+          setStats({ totalRounds: 0, correctReadings: 0, incorrectReadings: 0 });
+          setReadingResults({});
+          setCurrentWordIndex(0);
+          setIsReading(false);
+          setTimeLeft(0);
+          setIsTimerStarted(false);
+        };
+
+        // ----------------------------
+        // Render
+        // ----------------------------
+        return (
+          <div className="w-full max-w-5xl mx-auto p-4">
+            {/* Title */}
+            <div className="text-center mb-6">
+              <h1 className="text-3xl font-bold text-gray-700 mb-2">
+                ระบบฝึกอ่านคำศัพท์ภาษาจีน
+              </h1>
+              <p className="text-gray-600">
+                ฝึกอ่าน ออกเสียง และติดตามสถิติการเรียนรู้ได้ที่นี่
+              </p>
+            </div>
+
+            {/* Card: ตั้งค่า Timer & Word */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl">การตั้งค่า</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* ส่วนตั้งค่าคำศัพท์ */}
+                  <div>
+                    <label className="block mb-2 font-semibold text-gray-700">
+                      จำนวนคำ (2-10):
+                    </label>
+                    <input
+                      type="number"
+                      min="2"
+                      max="10"
+                      value={wordCount}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        if (val >= 2 && val <= 10) setWordCount(val);
+                      }}
+                      className="w-full p-2 border rounded"
+                    />
+
+                    <button
+                      onClick={drawWords}
+                      className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                    >
+                      สุ่มคำศัพท์
+                    </button>
+                  </div>
+
+                  {/* ส่วนตั้งค่า Timer */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <TimerIcon className="w-5 h-5 text-gray-600" />
+                      <label className="font-semibold text-gray-700">
+                        จับเวลา:
+                      </label>
+                    </div>
+                    <select
+                      value={timer}
+                      onChange={(e) => setTimer(e.target.value)}
+                      className="w-full p-2 border rounded"
+                    >
+                      <option value="none">ไม่จับเวลา</option>
+                      <option value="1">1 นาที</option>
+                      <option value="3">3 นาที</option>
+                      <option value="5">5 นาที</option>
+                    </select>
+
+                    <label className="block mt-2 flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={isHardMode}
+                        onChange={(e) => setIsHardMode(e.target.checked)}
+                      />
+                      โหมดยาก (1 นาที = 30 วินาที)
+                    </label>
+
+                    {/* ปุ่มเริ่ม & ปุ่มหยุดเวลา */}
+                    <div className="mt-4 flex gap-2">
+                      <button
+                        onClick={startTimer}
+                        disabled={timer === "none"}
+                        className={`px-4 py-2 rounded transition-colors flex-1 ${
+                          timer === "none"
+                            ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                            : "bg-pink-600 text-white hover:bg-pink-700"
+                        }`}
+                      >
+                        เริ่มจับเวลา
+                      </button>
+                      <button
+                        onClick={stopTimer}
+                        disabled={!isTimerStarted}
+                        className={`px-4 py-2 rounded transition-colors flex-1 ${
+                          !isTimerStarted
+                            ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                            : "bg-yellow-500 text-white hover:bg-yellow-600"
+                        }`}
+                      >
+                        หยุดเวลา
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Card: คำศัพท์ที่สุ่มได้ */}
+            {selectedWords.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl">คำศัพท์ที่สุ่มได้</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="mb-4">
+                    <div className="flex flex-wrap gap-2">
+                      {selectedWords.map((word, index) => {
+                        const result = readingResults[index];
+                        const bgColor =
+                          result === undefined
+                            ? "bg-gray-200"
+                            : result
+                            ? "bg-green-300 text-green-900"
+                            : "bg-red-300 text-red-900";
+
+                        return (
+                          <div
+                            key={index}
+                            className={`px-3 py-1 rounded-full text-lg ${bgColor}`}
+                          >
+                            {word}
+                            {result !== undefined && (
+                              <span className="ml-2">
+                                {result ? (
+                                  <CheckIcon className="w-4 h-4 inline" />
+                                ) : (
+                                  <XIcon className="w-4 h-4 inline" />
+                                )}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* แสดงเวลา (ถ้าเริ่มแล้ว & ไม่ใช่ none) */}
+                  {isTimerStarted && timer !== "none" && (
+                    <div className="text-center text-xl font-semibold mb-4 text-red-600">
+                      เหลือเวลา: {formatTime(timeLeft)}
+                    </div>
+                  )}
+
+                  {/* ปุ่มเริ่มประเมิน */}
+                  {!isReading && (
+                    <button
+                      onClick={startReading}
+                      className="w-full py-3 bg-green-600 text-white rounded hover:bg-green-700 transition-colors text-xl"
+                    >
+                      เริ่มประเมินการอ่าน
+                    </button>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Card: ประเมินการอ่านทีละคำ */}
+            {isReading && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl">กำลังประเมินการอ่าน</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <h3 className="font-bold mb-4 text-center text-xl">
+                    คำที่ {currentWordIndex + 1} / {selectedWords.length}
+                  </h3>
+                  <div className="text-center mb-4">
+                    <span className="text-5xl md:text-6xl font-bold text-blue-700">
+                      {selectedWords[currentWordIndex]}
+                    </span>
+                  </div>
+                  <div className="flex flex-col sm:flex-row justify-center gap-4">
+                    <button
+                      onClick={() => evaluateReading(true)}
+                      className="w-full sm:w-auto px-6 py-3 bg-green-600 text-white rounded hover:bg-green-700 transition-colors flex items-center justify-center gap-2 text-lg"
+                    >
+                      <CheckIcon className="w-6 h-6" /> อ่านถูก
+                    </button>
+                    <button
+                      onClick={() => evaluateReading(false)}
+                      className="w-full sm:w-auto px-6 py-3 bg-red-600 text-white rounded hover:bg-red-700 transition-colors flex items-center justify-center gap-2 text-lg"
+                    >
+                      <XIcon className="w-6 h-6" /> อ่านผิด
+                    </button>
+                  </div>
+                  {/* ปุ่มรีเซ็ตเฉพาะการอ่าน */}
+                  <div className="mt-4 text-center">
+                    <button
+                      onClick={resetReading}
+                      className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors"
+                    >
+                      รีเซ็ตการอ่าน
+                    </button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Card: สถิติ & ประวัติ */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-xl">สถิติ & ประวัติ</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-lg mb-1">
+                      จำนวนรอบ:{" "}
+                      <span className="font-bold">{stats.totalRounds}</span>
+                    </p>
+                    <p className="text-lg mb-1">
+                      อ่านถูก:{" "}
+                      <span className="font-bold">{stats.correctReadings}</span>{" "}
+                      คำ
+                    </p>
+                    <p className="text-lg mb-1">
+                      อ่านผิด:{" "}
+                      <span className="font-bold">{stats.incorrectReadings}</span>{" "}
+                      คำ
+                    </p>
+                    <p className="text-lg mb-4">
+                      ความแม่นยำ:{" "}
+                      <span className="font-bold">
+                        {stats.correctReadings + stats.incorrectReadings > 0
+                          ? Math.round(
+                              (stats.correctReadings /
+                                (stats.correctReadings + stats.incorrectReadings)) * 100
+                            )
+                          : 0}
+                        %
+                      </span>
+                    </p>
+                    <button
+                      onClick={resetSystem}
+                      className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors flex items-center gap-2"
+                    >
+                      <RotateCcwIcon className="w-5 h-5" />
+                      รีเซ็ตระบบทั้งหมด
+                    </button>
+
+                    {/* ปุ่มแชร์ (สถิติ) */}
+                    <ShareButtons stats={stats} />
+                  </div>
+                  <div>
+                    <div className="font-semibold mb-2">ประวัติการสุ่มคำ</div>
+                    <div className="space-y-2 max-h-40 overflow-y-auto text-sm">
+                      {history.map((item, idx) => (
+                        <div key={idx} className="p-2 bg-gray-50 rounded border">
+                          <div>{item.words.join(", ")}</div>
+                          <div className="text-xs text-gray-500">
+                            {new Date(item.timestamp).toLocaleString()}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* โมดอลแจ้งเตือน (เวลาหมด ฯลฯ) */}
+            <Modal isOpen={isModalOpen} onClose={closeModal} title={modalTitle}>
+              <p>{modalContent}</p>
+              <div className="mt-4 text-right">
+                <button
+                  onClick={closeModal}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                >
+                  ปิด
+                </button>
+              </div>
+            </Modal>
+          </div>
+        );
+      };
+
+      // --------------------------------------------------
+      // Render Application
+      // --------------------------------------------------
+      ReactDOM.render(<ChineseVocabPractice />, document.getElementById("root"));
+    </script>
+  </body>
 </html>
