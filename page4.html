@@ -234,6 +234,30 @@
       0% { transform: translateY(0) rotate(0deg); opacity: 1; }
       100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
     }
+    .next-container {
+  display: flex;
+  justify-content: center; /* จัดให้อยู่ตรงกลางแนวนอน */
+  align-items: center;
+  margin-top: 20px;
+}
+
+.next-btn {
+  background-color: #ff5722; /* สีส้มสด */
+  color: white;
+  padding: 12px 24px;
+  text-decoration: none;
+  font-size: 18px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.next-btn:hover {
+  background-color: #e64a19; /* สีส้มเข้มเมื่อ hover */
+  transform: translateY(-2px);
+}
+   
+    
   </style>
 </head>
 <body>
@@ -318,6 +342,14 @@
   
   <!-- Popup Notification Container -->
   <div id="toastContainer"></div>
+  <div class="next-container">
+  <a href="page5.html" class="next-btn">ไปหน้าถัดไป</a>
+</div>
+
+  <div class="next-container">
+  <a href="index.html" class="next-btn">Home</a>
+</div>
+  
   
   <script>
     class ReadingSystem {
