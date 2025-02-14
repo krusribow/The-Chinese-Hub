@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ระบบคุณครูสำหรับสอบอ่านคำศัพท์</title>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;700&display=swap" rel="stylesheet">
+  <!-- SweetAlert2 CSS & JS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+ <style>
+  body {
+    background-color: #f4f4f4;
+    padding: 20px;
+    margin: 0;
+    font-family: 'Noto Sans Thai', sans-serif;
+  }
+  .paper {
+    background-color: #fff;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+  }
+  h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #2c3e50;
+    font-size: 32px;
+    border-bottom: 3px solid #2980b9;
+    padding-bottom: 10px;
+  }
+  label {
+    font-size: 18px;
+    display: block;
+    margin-bottom: 8px;
+    color: #34495e;
+  }
+  input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    margin-bottom: 20px;
+    border: 2px solid #bdc3c7;
+    border-radius: 5px;
+    transition: border-color 0.3s ease;
+  }
+  input[type="text"]:focus {
+    border-color: #2980b9;
+    outline: none;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  th, td {
+    padding: 12px;
+    text-align: center;
+    border: 1px solid #ddd;
+  }
+  th {
+    background-color: #2980b9;
+    color: #fff;
+    font-weight: bold;
+  }
+  tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  tr:hover {
+    background-color: #f1f1f1;
+    transition: background-color 0.3s ease;
+  }
+  select {
+    width: 100%;
+    padding: 8px;
+    font-size: 16px;
+    border: 2px solid #bdc3c7;
+    border-radius: 5px;
+    transition: border-color 0.3s ease;
+  }
+  select:focus {
+    border-color: #2980b9;
+    outline: none;
+  }
+  .score-radio {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .score-radio label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    color: #34495e;
+  }
+  .btn-group {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .btn {
+    padding: 12px 24px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    background-color: #2980b9;
+    color: #fff;
+    cursor: pointer;
+    margin: 5px;
+    transition: background-color 0.3s ease;
+  }
+  .btn:hover {
+    background-color: #3498db;
+  }
+  .reset-history {
+    background-color: #e74c3c;
+  }
+  .reset-history:hover {
+    background-color: #c0392b;
+  }
+  #totalScore {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    margin-top: 20px;
+    color: #27ae60;
+  }
+  .history {
+    margin-top: 40px;
+    padding: 20px;
+    background-color: #ecf0f1;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  .history h2 {
+    text-align: center;
+    color: #2980b9;
+    margin-bottom: 20px;
+    font-size: 28px;
+  }
+  .history-list {
+    list-style: none;
+    padding: 0;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  .history-list li {
+    background-color: #fff;
+    margin-bottom: 10px;
+    padding: 15px;
+    border-left: 5px solid #2980b9;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+  }
+  .history-list li:hover {
+    transform: translateX(10px);
+  }
+</style>
+</head>
+<body>
+  <div class="paper">
+    <h1>ระบบคุณครูสำหรับสอบอ่านคำศัพท์</h1>
+    
+    <!-- ชื่อนักเรียน -->
+    <label for="studentName">ชื่อนักเรียน:</label>
+    <input type="text" id="studentName" placeholder="พิมพ์ชื่อนักเรียนที่นี่">
+
+    <!-- ตารางสำหรับคำศัพท์ (เลือกจากรายการคำศัพท์ที่สอน) 10 คำ -->
+    <table>
+      <thead>
+        <tr>
+          <th>ลำดับ</th>
+          <th>คำศัพท์ที่สอบ</th>
+          <th>คะแนน (เลือกได้ 1-5)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- 10 แถว -->
+        <!-- แถวที่ 1 -->
+        <tr>
+          <td>1</td>
+          <td>
+            <select id="vocab1"></select>
+          </td>
+          <td class="score-radio">
+            <label><input type="radio" name="score1" value="1" required> 1</label>
+            <label><input type="radio" name="score1" value="2"> 2</label>
+            <label><input type="radio" name="score1" value="3"> 3</label>
+            <label><input type="radio" name="score1" value="4"> 4</label>
+            <label><input type="radio" name="score1" value="5"> 5</label>
+          </td>
+        </tr>
+        <!-- แถวที่ 2 -->
+        <tr>
+          <td>2</td>
+          <td>
+            <select id="vocab2"></select>
+          </td>
+          <td class="score-radio">
+            <label><input type="radio" name="score2" value="1" required> 1</label>
+            <label><input type="radio" name="score2" value="2"> 2</label>
+            <label><input type="radio" name="score2" value="3"> 3</label>
+            <label><input type="radio" name="score2" value="4"> 4</label>
+            <label><input type="radio" name="score2" value="5"> 5</label>
+          </td>
+        </tr>
+        <!-- แถวที่ 3 -->
+        <tr>
+          <td>3</td>
+          <td>
+            <select id="vocab3"></select>
+          </td>
+          <td class="score-radio">
+            <label><input type="radio" name="score3" value="1" required> 1</label>
+            <label><input type="radio" name="score3" value="2"> 2</label>
+            <label><input type="radio" name="score3" value="3"> 3</label>
+            <label><input type="radio" name="score3" value="4"> 4</label>
+            <label><input type="radio" name="score3" value="5"> 5</label>
+          </td>
+        </tr>
+        <!-- แถวที่ 4 -->
+        <tr>
+          <td>4</td>
+          <td>
+            <select id="vocab4"></select>
+          </td>
+          <td class="score-radio">
+            <label><input type="radio" name="score4" value="1" required> 1</label>
+            <label><input type="radio" name="score4" value="2"> 2</label>
+            <label><input type="radio" name="score4" value="3"> 3</label>
+            <label><input type="radio" name="score4" value="4"> 4</label>
+            <label><input type="radio" name="score4" value="5"> 5</label>
+          </td>
+        </tr>
+        <!-- แถวที่ 5 -->
+        <tr>
+          <td>5</td>
+          <td>
+            <select id="vocab5"></select>
+          </td>
+          <td class="score-radio">
+            <label><input type="radio" name="score5" value="1" required> 1</label>
+            <label><input type="radio" name="score5" value="2"> 2</label>
+            <label><input type="radio" name="score5" value="3"> 3</label>
+            <label><input type="radio" name="score5" value="4"> 4</label>
+            <label><input type="radio" name="score5" value="5"> 5</label>
+          </td>
+        </tr>
+        <!-- แถวที่ 6 -->
+        <tr>
+          <td>6</td>
+          <td>
+            <select id="vocab6"></select>
+          </td>
+          <td class="score-radio">
+            <label><input type="radio" name="score6" value="1" required> 1</label>
+            <label><input type="radio" name="score6" value="2"> 2</label>
+            <label><input type="radio" name="score6" value="3"> 3</label>
+            <label><input type="radio" name="score6" value="4"> 4</label>
+            <label><input type="radio" name="score6" value="5"> 5</label>
+          </td>
+        </tr>
+        <!-- แถวที่ 7 -->
+        <tr>
+          <td>7</td>
+          <td>
+            <select id="vocab7"></select>
+          </td>
+          <td class="score-radio">
+            <label><input type="radio" name="score7" value="1" required> 1</label>
+            <label><input type="radio" name="score7" value="2"> 2</label>
+            <label><input type="radio" name="score7" value="3"> 3</label>
+            <label><input type="radio" name="score7" value="4"> 4</label>
+            <label><input type="radio" name="score7" value="5"> 5</label>
+          </td>
+        </tr>
+        <!-- แถวที่ 8 -->
+        <tr>
+          <td>8</td>
+          <td>
+            <select id="vocab8"></select>
+          </td>
+          <td class="score-radio">
+            <label><input type="radio" name="score8" value="1" required> 1</label>
+            <label><input type="radio" name="score8" value="2"> 2</label>
+            <label><input type="radio" name="score8" value="3"> 3</label>
+            <label><input type="radio" name="score8" value="4"> 4</label>
+            <label><input type="radio" name="score8" value="5"> 5</label>
+          </td>
+        </tr>
+        <!-- แถวที่ 9 -->
+        <tr>
+          <td>9</td>
+          <td>
+            <select id="vocab9"></select>
+          </td>
+          <td class="score-radio">
+            <label><input type="radio" name="score9" value="1" required> 1</label>
+            <label><input type="radio" name="score9" value="2"> 2</label>
+            <label><input type="radio" name="score9" value="3"> 3</label>
+            <label><input type="radio" name="score9" value="4"> 4</label>
+            <label><input type="radio" name="score9" value="5"> 5</label>
+          </td>
+        </tr>
+        <!-- แถวที่ 10 -->
+        <tr>
+          <td>10</td>
+          <td>
+            <select id="vocab10"></select>
+          </td>
+          <td class="score-radio">
+            <label><input type="radio" name="score10" value="1" required> 1</label>
+            <label><input type="radio" name="score10" value="2"> 2</label>
+            <label><input type="radio" name="score10" value="3"> 3</label>
+            <label><input type="radio" name="score10" value="4"> 4</label>
+            <label><input type="radio" name="score10" value="5"> 5</label>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    
+    <!-- ปุ่มสำหรับคำนวณคะแนน, บันทึกคะแนน และรีเซ็ตฟอร์ม -->
+    <div class="btn-group">
+      <button class="btn" onclick="calculateTotal()">คำนวณคะแนนรวม</button>
+      <button class="btn" onclick="saveRecord()">บันทึกคะแนน</button>
+      <button class="btn" onclick="resetForm()">รีเซ็ตฟอร์ม</button>
+    </div>
+    <div id="totalScore">คะแนนรวม: 0 / 50</div>
+    
+    <!-- ส่วนแสดงประวัติการบันทึกคะแนน -->
+    <div class="history">
+      <h2>ประวัติการบันทึกคะแนน</h2>
+      <ul class="history-list" id="historyList">
+        <!-- รายการประวัติจะแสดงที่นี่ -->
+      </ul>
+      <div class="btn-group">
+        <button class="btn reset-history" onclick="resetHistory()">รีเซ็ตประวัติ</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // รายการคำศัพท์ที่สอน (15 คำ) – สามารถแก้ไขได้ตามต้องการ
+    const taughtWords = [
+      "คำศัพท์ที่ 1",
+      "คำศัพท์ที่ 2",
+      "คำศัพท์ที่ 3",
+      "คำศัพท์ที่ 4",
+      "คำศัพท์ที่ 5",
+      "คำศัพท์ที่ 6",
+      "คำศัพท์ที่ 7",
+      "คำศัพท์ที่ 8",
+      "คำศัพท์ที่ 9",
+      "คำศัพท์ที่ 10",
+      "คำศัพท์ที่ 11",
+      "คำศัพท์ที่ 12",
+      "คำศัพท์ที่ 13",
+      "คำศัพท์ที่ 14",
+      "คำศัพท์ที่ 15"
+    ];
+
+    // ฟังก์ชันเติม dropdown ให้แต่ละแถว
+    function populateVocabDropdowns() {
+      for (let i = 1; i <= 10; i++) {
+        const selectElem = document.getElementById('vocab' + i);
+        // เคลียร์ตัวเลือกเก่า (ถ้ามี)
+        selectElem.innerHTML = "";
+        // เพิ่ม option เริ่มต้น (เลือกคำศัพท์)
+        const defaultOption = document.createElement('option');
+        defaultOption.value = "";
+        defaultOption.textContent = "-- เลือกคำศัพท์ --";
+        selectElem.appendChild(defaultOption);
+        // เติมคำศัพท์ที่สอนลงใน dropdown
+        taughtWords.forEach(word => {
+          const option = document.createElement('option');
+          option.value = word;
+          option.textContent = word;
+          selectElem.appendChild(option);
+        });
+      }
+    }
+
+    // เมื่อโหลดหน้าเว็บ ให้เติม dropdown
+    populateVocabDropdowns();
+
+    // คำนวณคะแนนรวมจากคะแนนในแต่ละแถว
+    function calculateTotal() {
+      let total = 0;
+      for (let i = 1; i <= 10; i++) {
+        const radios = document.getElementsByName('score' + i);
+        for (let radio of radios) {
+          if (radio.checked) {
+            total += parseInt(radio.value);
+            break;
+          }
+        }
+      }
+      document.getElementById('totalScore').innerText = "คะแนนรวม: " + total + " / 50";
+      return total;
+    }
+
+    // รีเซ็ตฟอร์ม: ล้างชื่อนักเรียน, เลือกคำศัพท์และคะแนน
+    function resetForm() {
+      document.getElementById('studentName').value = "";
+      for (let i = 1; i <= 10; i++) {
+        document.getElementById('vocab' + i).selectedIndex = 0;
+        const radios = document.getElementsByName('score' + i);
+        radios.forEach(radio => radio.checked = false);
+      }
+      document.getElementById('totalScore').innerText = "คะแนนรวม: 0 / 50";
+    }
+
+    // ระบบบันทึกประวัติการบันทึกคะแนนลง localStorage
+    function saveRecord() {
+      const studentName = document.getElementById('studentName').value.trim();
+      if (!studentName) {
+        Swal.fire({
+          icon: 'error',
+          title: 'ผิดพลาด',
+          text: 'กรุณาพิมพ์ชื่อนักเรียนก่อนบันทึกคะแนน'
+        });
+        return;
+      }
+      let details = [];
+      for (let i = 1; i <= 10; i++) {
+        const vocab = document.getElementById('vocab' + i).value;
+        const radios = document.getElementsByName('score' + i);
+        let score = null;
+        for (let radio of radios) {
+          if (radio.checked) {
+            score = radio.value;
+            break;
+          }
+        }
+        details.push({ vocab: vocab || "-", score: score || 0 });
+      }
+      const totalScore = calculateTotal();
+      const now = new Date();
+      const timestamp = now.toLocaleDateString('th-TH') + ' ' + now.toLocaleTimeString('th-TH');
+      const record = {
+        timestamp: timestamp,
+        studentName: studentName,
+        details: details,
+        totalScore: totalScore
+      };
+      
+      // ดึงประวัติเก่าแล้วเพิ่มรายการใหม่
+      let history = localStorage.getItem('examHistory');
+      history = history ? JSON.parse(history) : [];
+      history.push(record);
+      localStorage.setItem('examHistory', JSON.stringify(history));
+      updateHistoryDisplay();
+      Swal.fire({
+        icon: 'success',
+        title: 'บันทึกคะแนนเรียบร้อยแล้ว',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    }
+
+    // อัปเดตการแสดงผลประวัติ
+    function updateHistoryDisplay() {
+      let history = localStorage.getItem('examHistory');
+      history = history ? JSON.parse(history) : [];
+      const historyList = document.getElementById('historyList');
+      historyList.innerHTML = "";
+      history.slice().reverse().forEach(entry => {
+        const li = document.createElement('li');
+        li.textContent = `${entry.timestamp} - ${entry.studentName} ได้คะแนนรวม: ${entry.totalScore} / 50`;
+        historyList.appendChild(li);
+      });
+    }
+
+    // รีเซ็ตประวัติการบันทึกคะแนน
+    function resetHistory() {
+      Swal.fire({
+        title: 'รีเซ็ตประวัติ?',
+        text: "คุณต้องการล้างประวัติการบันทึกคะแนนทั้งหมดหรือไม่?",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'ใช่, ล้างเลย!',
+        cancelButtonText: 'ยกเลิก'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          localStorage.removeItem('examHistory');
+          updateHistoryDisplay();
+          Swal.fire({
+            icon: 'success',
+            title: 'ล้างประวัติเรียบร้อยแล้ว',
+            timer: 1500,
+            showConfirmButton: false
+          });
+        }
+      });
+    }
+
+    // เมื่อโหลดหน้าเว็บให้อัปเดตประวัติ
+    updateHistoryDisplay();
+  </script>
+</body>
+</html>
