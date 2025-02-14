@@ -1,5 +1,9 @@
 <!DOCTYPE html>
 <html lang="th">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+<a href="page2.html" class="next-btn">
+  ไปหน้าถัดไป <i class="fas fa-arrow-right"></i>
+</a>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -125,6 +129,22 @@
         transform: translateY(0);
         opacity: 1;
       }
+
+  .next-btn {
+    background-color: #ff5722; /* สีส้ม */
+    color: white;
+    padding: 12px 20px;
+    font-size: 18px;
+    border-radius: 6px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .next-btn:hover {
+    background-color: #e64a19;
+  }
     }
   </style>
   
@@ -155,22 +175,6 @@
     </div>
   </div>
 
-<button onclick="location.href='page2.html'" class="next-btn">ไปยังหน้าถัดไป</button>
-<style>
-  .next-btn {
-    background-color: #007bff; /* ปุ่มสีน้ำเงิน */
-    color: white;
-    padding: 10px 20px;
-    font-size: 16px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: 0.3s;
-  }
-
-  .next-btn:hover {
-    background-color: #0056b3; /* เปลี่ยนสีเมื่อ hover */
-  }
 </style>
 	
   <script>
