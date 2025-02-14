@@ -155,6 +155,24 @@
     </div>
   </div>
 
+<button onclick="location.href='page2.html'" class="next-btn">ไปยังหน้าถัดไป</button>
+<style>
+  .next-btn {
+    background-color: #007bff; /* ปุ่มสีน้ำเงิน */
+    color: white;
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: 0.3s;
+  }
+
+  .next-btn:hover {
+    background-color: #0056b3; /* เปลี่ยนสีเมื่อ hover */
+  }
+</style>
+	
   <script>
     // คำถามทั้งหมด 12 ข้อ พร้อมตัวเลือก คำตอบ รางวัล และคำใบ้
     const questions = [
@@ -394,7 +412,6 @@ window.addEventListener("click", (event) => {
       `;
     }
   </script>
-<a href="page%202.html">ไปยังหน้าถัดไป</a>
 	
 </body>
 </html>
