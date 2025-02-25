@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>การสอบปลายภาคภาษาจีน</title>
+    
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            max-width: 700px;
+            width: 100%;
+        }
+        h2 {
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        .question {
+            margin: 25px 0;
+            text-align: left;
+        }
+        .question p {
+            font-size: 18px;
+            color: #34495e;
+        }
+        .timer {
+            color: #e74c3c;
+            font-weight: bold;
+            font-size: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+        #result-section {
+            text-align: left;
+        }
+        #result-section p {
+            font-size: 18px;
+            color: #2c3e50;
+        }
+        #answers {
+            background: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- หน้า Login -->
+        <div id="login-section">
+        <h1>วิชาสนทนาภาษาจีน 4 (จ30204)</h1>
+     	<P>นางสาวศรีสุภา เทศขำ กลุ่มสาระการเรียนรู้ภาษาต่างประเทศ โรงเรียนเรืองวิทย์ำิทยาคม</P>
+            <h2>ลงชื่อเข้าใช้</h2>
+            <p>ชื่อ: <input type="text" id="student-name" placeholder="ชื่อ-นามสกุล"></p>
+            <p>ชั้น: <input type="text" id="student-class" placeholder="ม.4/1"></p>
+            <p>เลขที่: <input type="number" id="student-id" placeholder="1"></p>
+            <button onclick="startExam()">เริ่มสอบ</button>
+        </div>
+
+        <!-- หน้าข้อสอบ -->
+        <div id="exam-section" class="hidden">
+            <h2>ข้อสอบภาษาจีน</h2>
+            <p>ข้อที่: <span id="question-number">1</span> / 28</p>
+            <p>เวลา: <span id="timer">25</span> วินาที</p>
+            <div id="question-container" class="question"></div>
+            <button id="next-btn" onclick="nextQuestion()">ข้อถัดไป</button>
+        </div>
+
+        <!-- หน้าสรุปผล -->
+        <div id="result-section" class="hidden">
+            <h2>ผลการสอบ</h2>
+            <p>ชื่อ: <span id="result-name"></span></p>
+            <p>ชั้น: <span id="result-class"></span></p>
+            <p>เลขที่: <span id="result-id"></span></p>
+            <p>คะแนน: <span id="result-score"></span> / 30</p>
+            <p>ผล: <span id="result-status"></span></p>
+            <h3>เฉลยคำตอบ</h3>
+            <div id="answers"></div>
+            <button onclick="location.reload()">ทำสอบใหม่</button>
+        </div>
+    </div>
+
+    <script>
+        const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbxeVIoy4TJNuO2gdUK7xE9cplXxW-jGlsSj61pLCsmSzs-5GGcUmn-D-B3KRlxjXiE/exec"; // แทนที่ด้วย URL จาก Apps Script
+
+        const questions = [
+            { q: "苹果 (píngguǒ) หมายถึงอะไร?", options: ["กล้วย", "แอปเปิ้ล", "สับปะรด", "ส้ม"], answer: "แอปเปิ้ล" },
+            { q: "葡萄 (pútáo) หมายถึงอะไร?", options: ["ลำไย", "มังคุด", "องุ่น", "แตงโม"], answer: "องุ่น" },
+            { q: "香蕉 (xiāngjiāo) หมายถึงอะไร?", options: ["กล้วย", "เชอร์รี่", "มะม่วง", "มะละกอ"], answer: "กล้วย" },
+            { q: "西瓜 (xīguā) หมายถึงอะไร?", options: ["แอปเปิ้ล", "แตงโม", "มังคุด", "ลิ้นจี่"], answer: "แตงโม" },
+            { q: "荔枝 (lìzhī) หมายถึงอะไร?", options: ["ลิ้นจี่", "ทุเรียน", "สับปะรด", "สตรอว์เบอร์รี่"], answer: "ลิ้นจี่" },
+            { q: "椰子 (yēzi) หมายถึงอะไร?", options: ["มังคุด", "มะพร้าว", "มะม่วง", "ส้มโอ"], answer: "มะพร้าว" },
+            { q: "榴莲 (liúlián) หมายถึงอะไร?", options: ["สับปะรด", "องุ่น", "ทุเรียน", "มะเฟือง"], answer: "ทุเรียน" },
+            { q: "木瓜 (mùguā) หมายถึงอะไร?", options: ["มะละกอ", "ลำไย", "ลูกท้อ", "มะพร้าว"], answer: "มะละกอ" },
+            { q: "桃子 (táozi) หมายถึงอะไร?", options: ["แตงโม", "ส้ม", "ลูกท้อ", "เชอร์รี่"], answer: "ลูกท้อ" },
+            { q: "樱桃 (yīngtáo) หมายถึงอะไร?", options: ["เชอร์รี่", "มะเฟือง", "ลิ้นจี่", "มังคุด"], answer: "เชอร์รี่" },
+            { q: "香蕉 (xiāngjiāo) = กล้วย", options: ["✅", "❌"], answer: "✅" },
+            { q: "苹果 (píngguǒ) = องุ่น", options: ["✅", "❌"], answer: "❌" },
+            { q: "葡萄 (pútáo) = องุ่น", options: ["✅", "❌"], answer: "✅" },
+            { q: "榴莲 (liúlián) = สตรอว์เบอร์รี่", options: ["✅", "❌"], answer: "❌" },
+            { q: "荔枝 (lìzhī) = ลิ้นจี่", options: ["✅", "❌"], answer: "✅" },
+            { q: "木瓜 (mùguā) = ส้มโอ", options: ["✅", "❌"], answer: "❌" },
+            { q: "西瓜 (xīguā) = แตงโม", options: ["✅", "❌"], answer: "✅" },
+            { q: "樱桃 (yīngtáo) = เชอร์รี่", options: ["✅", "❌"], answer: "✅" },
+            { q: "桃子 (táozi) = ลูกท้อ", options: ["✅", "❌"], answer: "✅" },
+            { q: "龙眼 (lóngyǎn) = ลำไย", options: ["✅", "❌"], answer: "✅" },
+            { q: "椰子", options: ["yēzi", "yézi"], answer: "yēzi" },
+            { q: "芒果", options: ["mángguǒ", "mǎngguǒ"], answer: "mángguǒ" },
+            { q: "木瓜", options: ["mùguā", "mùguó"], answer: "mùguā" },
+            { q: "西瓜", options: ["xīguā", "xīguǒ"], answer: "xīguā" },
+            { q: "石榴", options: ["shíliú", "shílíu"], answer: "shíliú" },
+            { q: "葡萄", options: ["pútao", "pútáo"], answer: "pútáo" },
+            { q: "我喜欢吃苹果和葡萄。", options: ["ฉันชอบกินแอปเปิ้ลและองุ่น", "ฉันชอบกินกล้วยและส้ม"], answer: "ฉันชอบกินแอปเปิ้ลและองุ่น" },
+            { q: "你想吃香蕉还是芒果？", options: ["คุณอยากกินกล้วยหรือมะม่วง", "คุณอยากกินแอปเปิ้ลหรือแตงโม"], answer: "คุณอยากกินกล้วยหรือมะม่วง" }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let timeLeft = 25;
+        let timer;
+        let studentData = {};
+        const userAnswers = [];
+
+        function startExam() {
+            const name = document.getElementById("student-name").value;
+            const studentClass = document.getElementById("student-class").value;
+            const studentId = document.getElementById("student-id").value;
+            if (name && studentClass && studentId) {
+                studentData = { name, studentClass, studentId };
+                document.getElementById("login-section").classList.add("hidden");
+                document.getElementById("exam-section").classList.remove("hidden");
+                loadQuestion();
+                startTimer();
+            } else {
+                alert("กรุณากรอกข้อมูลให้ครบถ้วน");
+            }
+        }
+
+        function loadQuestion() {
+            const q = questions[currentQuestion];
+            document.getElementById("question-number").innerText = currentQuestion + 1;
+            document.getElementById("question-container").innerHTML = `
+                <p>${q.q}</p>
+                ${q.options.map((option, index) => `
+                    <input type="radio" name="answer" value="${option}" id="option${index}">
+                    <label for="option${index}">${option}</label><br>
+                `).join("")}
+            `;
+            timeLeft = 25;
+            document.getElementById("timer").innerText = timeLeft;
+        }
+
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById("timer").innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    nextQuestion();
+                }
+            }, 1000);
+        }
+
+        function nextQuestion() {
+            const selected = document.querySelector('input[name="answer"]:checked');
+            const userAnswer = selected ? selected.value : "ไม่ได้ตอบ";
+            userAnswers.push({ question: questions[currentQuestion].q, answer: userAnswer, correct: questions[currentQuestion].answer });
+            if (userAnswer === questions[currentQuestion].answer) score++;
+
+            clearInterval(timer);
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                loadQuestion();
+                startTimer();
+            } else {
+                showResult();
+                saveToGoogleSheet();
+            }
+        }
+
+        function showResult() {
+            document.getElementById("exam-section").classList.add("hidden");
+            document.getElementById("result-section").classList.remove("hidden");
+            document.getElementById("result-name").innerText = studentData.name;
+            document.getElementById("result-class").innerText = studentData.studentClass;
+            document.getElementById("result-id").innerText = studentData.studentId;
+            document.getElementById("result-score").innerText = score;
+            document.getElementById("result-status").innerText = score >= 12 ? "ผ่าน" : "ไม่ผ่าน";
+
+            const answersDiv = document.getElementById("answers");
+            answersDiv.innerHTML = userAnswers.map((a, index) => `
+                <p>ข้อ ${index + 1}: ${a.question}<br>
+                คำตอบของคุณ: ${a.answer} | เฉลย: ${questions[index].answer}</p>
+            `).join("");
+        }
+
+        function saveToGoogleSheet() {
+            const data = {
+                name: studentData.name,
+                class: studentData.studentClass,
+                studentId: studentData.studentId,
+                score: score,
+                status: score >= 12 ? "ผ่าน" : "ไม่ผ่าน"
+            };
+            fetch(SHEET_API_URL, {
+                method: "POST",
+                body: JSON.stringify(data),
+                headers: { "Content-Type": "application/json" }
+            })
+            .then(response => response.json())
+            .then(result => console.log("บันทึกสำเร็จ:", result))
+            .catch(error => console.error("เกิดข้อผิดพลาด:", error));
+        }
+    </script>
+</body>
+</html>
